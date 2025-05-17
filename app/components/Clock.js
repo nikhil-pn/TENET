@@ -11,6 +11,7 @@ export default function Clock({ onTimerUpdate }) {
   const [isBreakMode, setIsBreakMode] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const [waitingForUserInput, setWaitingForUserInput] = useState(false);
+  const [totalProductiveMinutes, setTotalProductiveMinutes] = useState(0);
 
   // Timer settings
   const pomodoroMinutes = 1;
@@ -28,6 +29,14 @@ export default function Clock({ onTimerUpdate }) {
 
   // Ref to track if toast has been shown
   const toastShownRef = useRef(false);
+
+  // Load total productive time from localStorage on component mount
+  useEffect(() => {
+    const savedTime = localStorage.getItem("productiveTime");
+    if (savedTime) {
+      setTotalProductiveMinutes(parseInt(savedTime, 10));
+    }
+  }, []);
 
   // Update the timer status when relevant state changes
   useEffect(() => {
@@ -47,9 +56,11 @@ export default function Clock({ onTimerUpdate }) {
                 shortBreakSeconds
               )}`;
       } else {
-        status = `Today's Productivity : ${formatTime(
-          timerSeconds
-        )} / ${formatTime(pomodoroSeconds)}`;
+        status = `Today's Productivity: ${formatTimeHours(
+          totalProductiveMinutes * 60
+        )} (Current: ${formatTime(timerSeconds)} / ${formatTime(
+          pomodoroSeconds
+        )})`;
       }
       onTimerUpdate(status);
     }
@@ -59,6 +70,7 @@ export default function Clock({ onTimerUpdate }) {
     waitingForUserInput,
     pomodoroCount,
     onTimerUpdate,
+    totalProductiveMinutes,
   ]);
 
   useEffect(() => {
@@ -169,6 +181,14 @@ export default function Clock({ onTimerUpdate }) {
                 toastId: "pomodoro-complete",
               });
 
+              // Save completed Pomodoro time to localStorage
+              const newTotalMinutes = totalProductiveMinutes + pomodoroMinutes;
+              setTotalProductiveMinutes(newTotalMinutes);
+              localStorage.setItem(
+                "productiveTime",
+                newTotalMinutes.toString()
+              );
+
               // Increment pomodoro count
               setPomodoroCount((prevCount) => prevCount + 1);
 
@@ -193,7 +213,14 @@ export default function Clock({ onTimerUpdate }) {
     setClockHands(); // Update immediately after mode change
 
     return () => clearInterval(interval);
-  }, [isTimerMode, timerSeconds, isBreakMode, pomodoroCount]);
+  }, [
+    isTimerMode,
+    timerSeconds,
+    isBreakMode,
+    pomodoroCount,
+    totalProductiveMinutes,
+    pomodoroMinutes,
+  ]);
 
   function setClockHands() {
     let hours, minutes, seconds;
@@ -268,6 +295,13 @@ export default function Clock({ onTimerUpdate }) {
     return `${mins.toString().padStart(2, "0")}:${secs
       .toString()
       .padStart(2, "0")}`;
+  };
+
+  // Format seconds to HH:MM for total productive time
+  const formatTimeHours = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${mins}m`;
   };
 
   return (
