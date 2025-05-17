@@ -72,7 +72,7 @@ export default function Clock() {
 
             // Show toast notification only if not shown already
             toastShownRef.current = true;
-            toast.success("Pomodoro completed! Time for a break.", {
+            toast.success("Session completed! Time for a 5 minute break.", {
               position: "top-right",
               autoClose: 5000,
               hideProgressBar: false,
