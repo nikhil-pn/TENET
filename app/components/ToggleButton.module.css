@@ -63,7 +63,7 @@
   opacity: 0.9;
   height: 100%;
   width: 100%;
-  color: rgba(0, 255, 0, 0.9);
+  color: rgba(0, 0, 0, 0.9);
 }
 
 .toggle input {
@@ -88,7 +88,7 @@
 
 .toggle input:active ~ .label {
   font-size: 26px;
-  color: rgba(0, 255, 0, 0.45);
+  color: rgba(0, 0, 0, 0.45);
 }
 
 .toggle input:checked ~ .button {
