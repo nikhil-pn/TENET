@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import styles from "./Clock.module.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Clock() {
   const [isTimerMode, setIsTimerMode] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isPomodoroCompleted, setIsPomodoroCompleted] = useState(false);
-  const pomodoroMinutes = 25;
+  const pomodoroMinutes = 1;
   const pomodoroSeconds = pomodoroMinutes * 60;
 
   // Ref to keep track of previous timer state for resuming
@@ -14,6 +16,9 @@ export default function Clock() {
     isOn: false,
     seconds: 0,
   });
+
+  // Ref to track if toast has been shown
+  const toastShownRef = useRef(false);
 
   useEffect(() => {
     setupClock("skeuomorphic");
@@ -30,6 +35,10 @@ export default function Clock() {
         if (isOn && isPomodoroCompleted) {
           // Resuming after Pomodoro completion - keep the timer at 25 min
           setIsPomodoroCompleted(false);
+          // Reset timer if resuming after completion
+          setTimerSeconds(0);
+          // Reset toast shown flag when starting a new session
+          toastShownRef.current = false;
         }
 
         setIsTimerMode(isOn);
@@ -57,9 +66,21 @@ export default function Clock() {
           const newValue = prev + 1;
 
           // Check if we reached the Pomodoro time (25 minutes)
-          if (newValue === pomodoroSeconds) {
+          if (newValue === pomodoroSeconds && !toastShownRef.current) {
             console.log("saving reached 25m");
             setIsPomodoroCompleted(true);
+
+            // Show toast notification only if not shown already
+            toastShownRef.current = true;
+            toast.success("Pomodoro completed! Time for a break.", {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              toastId: "pomodoro-complete", // Add a unique ID to prevent duplicates
+            });
 
             // Uncheck the toggle button to indicate pause
             const mainToggle = document.getElementById("main-toggle");
@@ -76,17 +97,11 @@ export default function Clock() {
         });
         setClockHands();
       }, 1000);
-    } else if (!isTimerMode && !isPomodoroCompleted) {
-      // Clock mode - update every second
-      if (timerSeconds !== 0) {
-        setTimerSeconds(0); // Reset timer when stopped
-      }
+    } else {
+      // When timer is paused, just update the display without changing time
       interval = setInterval(() => {
         setClockHands();
       }, 1000);
-    } else if (isPomodoroCompleted) {
-      // Keep the clock hands at 25 minutes position
-      setClockHands();
     }
 
     setClockHands(); // Update immediately after mode change
@@ -97,22 +112,12 @@ export default function Clock() {
   function setClockHands() {
     let hours, minutes, seconds;
 
-    if (isTimerMode || isPomodoroCompleted) {
-      // Timer mode or paused at Pomodoro completion
-      const secondsToUse =
-        isPomodoroCompleted && !isTimerMode ? pomodoroSeconds : timerSeconds;
+    // Always use timer seconds, regardless of mode
+    const secondsToUse = isPomodoroCompleted ? pomodoroSeconds : timerSeconds;
 
-      hours = Math.floor(secondsToUse / 3600) % 12;
-      minutes = Math.floor((secondsToUse % 3600) / 60);
-      seconds = secondsToUse % 60;
-    } else {
-      // Regular clock mode
-      const now = new Date();
-      const hours24 = now.getHours();
-      hours = hours24 % 12 || 12;
-      minutes = now.getMinutes();
-      seconds = now.getSeconds();
-    }
+    hours = Math.floor(secondsToUse / 3600) % 12;
+    minutes = Math.floor((secondsToUse % 3600) / 60);
+    seconds = secondsToUse % 60;
 
     const hourDegrees = hours * 30 + minutes * 0.5;
     const minuteDegrees = minutes * 6 + seconds * 0.1;
@@ -174,6 +179,7 @@ export default function Clock() {
 
   return (
     <div className={styles.skeuomorphic}>
+      <ToastContainer />
       <div className={styles.clockContainer}>
         <div className={styles.clockBezel}></div>
         <div className={styles.clockFace}></div>
