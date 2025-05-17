@@ -2,38 +2,28 @@
 import { useState } from "react";
 import styles from "./ToggleButton.module.css";
 
-export default function ToggleButton() {
+export default function ToggleButton({ onToggle, id }) {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleToggle = () => {
-    setIsChecked(!isChecked);
+    const newState = !isChecked;
+    setIsChecked(newState);
+    if (onToggle) {
+      onToggle(newState);
+    }
   };
 
   return (
-    <div className={styles["toggle-wrapper"]}>
-      <input
-        className={styles["toggle-checkbox"]}
-        type="checkbox"
-        checked={isChecked}
-        onChange={handleToggle}
-      />
-      <div className={styles["toggle-container"]}>
-        <div className={styles["toggle-button"]}>
-          <div className={styles["toggle-button-circles-container"]}>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-            <div className={styles["toggle-button-circle"]}></div>
-          </div>
-        </div>
+    <div className={styles.container}>
+      <div className={styles.toggle}>
+        <input
+          id={id}
+          type="checkbox"
+          checked={isChecked}
+          onChange={handleToggle}
+        />
+        <span className={styles.button}></span>
+        <span className={styles.label}>☼</span>
       </div>
     </div>
   );

@@ -1,25 +1,120 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import styles from "./Clock.module.css";
 
 export default function Clock() {
+  const [isTimerMode, setIsTimerMode] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isPomodoroCompleted, setIsPomodoroCompleted] = useState(false);
+  const pomodoroMinutes = 25;
+  const pomodoroSeconds = pomodoroMinutes * 60;
+
+  // Ref to keep track of previous timer state for resuming
+  const prevTimerState = useRef({
+    isOn: false,
+    seconds: 0,
+  });
+
   useEffect(() => {
     setupClock("skeuomorphic");
 
-    const interval = setInterval(setClockHands, 1000);
-    setClockHands(); // Initial positioning
+    // Initial positioning
+    setClockHands();
+
+    // Set up event listener for the toggle button
+    const mainToggle = document.getElementById("main-toggle");
+    if (mainToggle) {
+      mainToggle.addEventListener("change", (e) => {
+        const isOn = e.target.checked;
+
+        if (isOn && isPomodoroCompleted) {
+          // Resuming after Pomodoro completion - keep the timer at 25 min
+          setIsPomodoroCompleted(false);
+        }
+
+        setIsTimerMode(isOn);
+        prevTimerState.current.isOn = isOn;
+      });
+    }
+
+    return () => {
+      const mainToggle = document.getElementById("main-toggle");
+      if (mainToggle) {
+        mainToggle.removeEventListener("change", (e) => {
+          setIsTimerMode(e.target.checked);
+        });
+      }
+    };
+  }, [isPomodoroCompleted]);
+
+  useEffect(() => {
+    let interval;
+
+    if (isTimerMode && !isPomodoroCompleted) {
+      // Timer mode - increment seconds
+      interval = setInterval(() => {
+        setTimerSeconds((prev) => {
+          const newValue = prev + 1;
+
+          // Check if we reached the Pomodoro time (25 minutes)
+          if (newValue === pomodoroSeconds) {
+            console.log("saving reached 25m");
+            setIsPomodoroCompleted(true);
+
+            // Uncheck the toggle button to indicate pause
+            const mainToggle = document.getElementById("main-toggle");
+            if (mainToggle) {
+              mainToggle.checked = false;
+            }
+
+            // Store current state for potential resume
+            prevTimerState.current.seconds = newValue;
+            setIsTimerMode(false);
+          }
+
+          return newValue;
+        });
+        setClockHands();
+      }, 1000);
+    } else if (!isTimerMode && !isPomodoroCompleted) {
+      // Clock mode - update every second
+      if (timerSeconds !== 0) {
+        setTimerSeconds(0); // Reset timer when stopped
+      }
+      interval = setInterval(() => {
+        setClockHands();
+      }, 1000);
+    } else if (isPomodoroCompleted) {
+      // Keep the clock hands at 25 minutes position
+      setClockHands();
+    }
+
+    setClockHands(); // Update immediately after mode change
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isTimerMode, timerSeconds, isPomodoroCompleted]);
 
   function setClockHands() {
-    const now = new Date();
-    const hours24 = now.getHours();
-    const hours = hours24 % 12 || 12;
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
+    let hours, minutes, seconds;
 
-    const hourDegrees = (hours % 12) * 30 + minutes * 0.5;
+    if (isTimerMode || isPomodoroCompleted) {
+      // Timer mode or paused at Pomodoro completion
+      const secondsToUse =
+        isPomodoroCompleted && !isTimerMode ? pomodoroSeconds : timerSeconds;
+
+      hours = Math.floor(secondsToUse / 3600) % 12;
+      minutes = Math.floor((secondsToUse % 3600) / 60);
+      seconds = secondsToUse % 60;
+    } else {
+      // Regular clock mode
+      const now = new Date();
+      const hours24 = now.getHours();
+      hours = hours24 % 12 || 12;
+      minutes = now.getMinutes();
+      seconds = now.getSeconds();
+    }
+
+    const hourDegrees = hours * 30 + minutes * 0.5;
     const minuteDegrees = minutes * 6 + seconds * 0.1;
     const secondDegrees = seconds * 6;
 

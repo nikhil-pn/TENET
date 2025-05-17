@@ -8,7 +8,7 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Clock />
         <div className="mt-8">
-          <ToggleButton />
+          <ToggleButton id="main-toggle" />
         </div>
       </div>
     </div>
