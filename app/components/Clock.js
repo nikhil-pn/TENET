@@ -4,12 +4,21 @@ import styles from "./Clock.module.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function Clock() {
+export default function Clock({ onTimerUpdate }) {
   const [isTimerMode, setIsTimerMode] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isPomodoroCompleted, setIsPomodoroCompleted] = useState(false);
+  const [isBreakMode, setIsBreakMode] = useState(false);
+  const [pomodoroCount, setPomodoroCount] = useState(0);
+  const [waitingForUserInput, setWaitingForUserInput] = useState(false);
+
+  // Timer settings
   const pomodoroMinutes = 1;
   const pomodoroSeconds = pomodoroMinutes * 60;
+  const shortBreakMinutes = 1;
+  const shortBreakSeconds = shortBreakMinutes * 60;
+  const longBreakMinutes = 30;
+  const longBreakSeconds = longBreakMinutes * 60;
 
   // Ref to keep track of previous timer state for resuming
   const prevTimerState = useRef({
@@ -19,6 +28,38 @@ export default function Clock() {
 
   // Ref to track if toast has been shown
   const toastShownRef = useRef(false);
+
+  // Update the timer status when relevant state changes
+  useEffect(() => {
+    if (onTimerUpdate) {
+      let status;
+      if (waitingForUserInput) {
+        status = "Click to start next session";
+      } else if (isBreakMode) {
+        const breakSeconds =
+          pomodoroCount >= 4 ? longBreakSeconds : shortBreakSeconds;
+        status =
+          pomodoroCount >= 4
+            ? `Long Break: ${formatTime(timerSeconds)} / ${formatTime(
+                longBreakSeconds
+              )}`
+            : `Break: ${formatTime(timerSeconds)} / ${formatTime(
+                shortBreakSeconds
+              )}`;
+      } else {
+        status = `Today's Productivity : ${formatTime(
+          timerSeconds
+        )} / ${formatTime(pomodoroSeconds)}`;
+      }
+      onTimerUpdate(status);
+    }
+  }, [
+    timerSeconds,
+    isBreakMode,
+    waitingForUserInput,
+    pomodoroCount,
+    onTimerUpdate,
+  ]);
 
   useEffect(() => {
     setupClock("skeuomorphic");
@@ -32,16 +73,22 @@ export default function Clock() {
       mainToggle.addEventListener("change", (e) => {
         const isOn = e.target.checked;
 
-        if (isOn && isPomodoroCompleted) {
-          // Resuming after Pomodoro completion - keep the timer at 25 min
-          setIsPomodoroCompleted(false);
-          // Reset timer if resuming after completion
-          setTimerSeconds(0);
-          // Reset toast shown flag when starting a new session
+        if (isOn && waitingForUserInput) {
+          // User clicked to start a new session
+          setWaitingForUserInput(false);
+          setIsBreakMode(false);
           toastShownRef.current = false;
+          setTimerSeconds(0);
+          setIsTimerMode(true);
+        } else if (isOn) {
+          // Regular toggle on
+          setIsTimerMode(true);
+          toastShownRef.current = false;
+        } else {
+          // Toggle off - pause the timer
+          setIsTimerMode(false);
         }
 
-        setIsTimerMode(isOn);
         prevTimerState.current.isOn = isOn;
       });
     }
@@ -54,43 +101,82 @@ export default function Clock() {
         });
       }
     };
-  }, [isPomodoroCompleted]);
+  }, [waitingForUserInput]);
 
   useEffect(() => {
     let interval;
 
-    if (isTimerMode && !isPomodoroCompleted) {
+    if (isTimerMode) {
       // Timer mode - increment seconds
       interval = setInterval(() => {
         setTimerSeconds((prev) => {
           const newValue = prev + 1;
 
-          // Check if we reached the Pomodoro time (25 minutes)
-          if (newValue === pomodoroSeconds && !toastShownRef.current) {
-            console.log("saving reached 25m");
-            setIsPomodoroCompleted(true);
+          // Check if we're in break mode
+          if (isBreakMode) {
+            const breakSeconds =
+              pomodoroCount >= 4 ? longBreakSeconds : shortBreakSeconds;
 
-            // Show toast notification only if not shown already
-            toastShownRef.current = true;
-            toast.success("Session completed! Time for a 5 minute break.", {
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              toastId: "pomodoro-complete", // Add a unique ID to prevent duplicates
-            });
+            // Check if break is completed
+            if (newValue >= breakSeconds && !toastShownRef.current) {
+              const breakType = pomodoroCount >= 4 ? "long" : "short";
 
-            // Uncheck the toggle button to indicate pause
-            const mainToggle = document.getElementById("main-toggle");
-            if (mainToggle) {
-              mainToggle.checked = false;
+              // Reset pomodoro count after long break
+              if (pomodoroCount >= 4) {
+                setPomodoroCount(0);
+              }
+
+              // Show break completed toast
+              toastShownRef.current = true;
+              toast.info(
+                `${
+                  breakType.charAt(0).toUpperCase() + breakType.slice(1)
+                } break completed!`,
+                {
+                  position: "top-right",
+                  autoClose: 5000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  toastId: "break-complete",
+                }
+              );
+
+              // Stop timer and wait for user to start next session
+              setIsTimerMode(false);
+              setIsBreakMode(false);
+              setWaitingForUserInput(true);
+
+              // Uncheck the toggle button
+              const mainToggle = document.getElementById("main-toggle");
+              if (mainToggle) {
+                mainToggle.checked = false;
+              }
             }
+          } else {
+            // Regular pomodoro session
+            if (newValue >= pomodoroSeconds && !toastShownRef.current) {
+              // Show session completed toast
+              toastShownRef.current = true;
+              toast.success("Session completed! Time for a break.", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                toastId: "pomodoro-complete",
+              });
 
-            // Store current state for potential resume
-            prevTimerState.current.seconds = newValue;
-            setIsTimerMode(false);
+              // Increment pomodoro count
+              setPomodoroCount((prevCount) => prevCount + 1);
+
+              // Switch to break mode and reset timer
+              setIsBreakMode(true);
+              setTimerSeconds(0);
+              toastShownRef.current = false;
+            }
           }
 
           return newValue;
@@ -107,17 +193,15 @@ export default function Clock() {
     setClockHands(); // Update immediately after mode change
 
     return () => clearInterval(interval);
-  }, [isTimerMode, timerSeconds, isPomodoroCompleted]);
+  }, [isTimerMode, timerSeconds, isBreakMode, pomodoroCount]);
 
   function setClockHands() {
     let hours, minutes, seconds;
 
-    // Always use timer seconds, regardless of mode
-    const secondsToUse = isPomodoroCompleted ? pomodoroSeconds : timerSeconds;
-
-    hours = Math.floor(secondsToUse / 3600) % 12;
-    minutes = Math.floor((secondsToUse % 3600) / 60);
-    seconds = secondsToUse % 60;
+    // Use the current timer value directly, rather than calculating remaining time
+    hours = Math.floor(timerSeconds / 3600) % 12;
+    minutes = Math.floor((timerSeconds % 3600) / 60);
+    seconds = timerSeconds % 60;
 
     const hourDegrees = hours * 30 + minutes * 0.5;
     const minuteDegrees = minutes * 6 + seconds * 0.1;
@@ -176,6 +260,15 @@ export default function Clock() {
       }
     }
   }
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   return (
     <div className={styles.skeuomorphic}>
