@@ -344,6 +344,18 @@ export default function Clock({ onTimerUpdate }) {
   return (
     <div className={styles.skeuomorphic}>
       <ToastContainer />
+      <div className={styles.pomodoroIndicator}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <span
+            key={index}
+            className={`${styles.tomatoEmoji} ${
+              index < pomodoroCount ? styles.active : ""
+            }`}
+          >
+            🍅
+          </span>
+        ))}
+      </div>
       <div className={styles.clockContainer}>
         <div className={styles.clockBezel}></div>
         <div className={styles.clockFace}></div>
