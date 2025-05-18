@@ -2,7 +2,14 @@
 import { useState, useEffect } from "react";
 import styles from "./MonthlyChart.module.css";
 
-const MonthlyChart = ({ isVisible, onClose, todayProductivity }) => {
+const MonthlyChart = ({
+  isVisible,
+  onClose,
+  todayProductivity,
+  appInstalled,
+  deferredPrompt,
+  onInstall,
+}) => {
   const [monthData, setMonthData] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -159,16 +166,24 @@ const MonthlyChart = ({ isVisible, onClose, todayProductivity }) => {
           <div className={styles.monthYearDisplay}>
             {monthNames[currentMonth]} {currentYear}
           </div>
-          <div className={styles.todayButton} onClick={handleToday}>
-            Today
-          </div>
+          <div className={styles.controlsContainer}>
+            <div className={styles.todayButton} onClick={handleToday}>
+              Today
+            </div>
 
-          <button className={styles.navButton} onClick={handlePrevMonth}>
-            ↑
-          </button>
-          <button className={styles.navButton} onClick={handleNextMonth}>
-            ↓
-          </button>
+            <button className={styles.navButton} onClick={handlePrevMonth}>
+              ↑
+            </button>
+            <button className={styles.navButton} onClick={handleNextMonth}>
+              ↓
+            </button>
+
+            {!appInstalled && deferredPrompt && (
+              <button onClick={onInstall} className={styles.installButton}>
+                Install App
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={styles.calendarGrid}>

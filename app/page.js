@@ -93,6 +93,9 @@ export default function Home() {
         isVisible={showChart}
         onClose={() => setShowChart(false)}
         todayProductivity={todayProductivity}
+        appInstalled={appInstalled}
+        deferredPrompt={deferredPrompt}
+        onInstall={installApp}
       />
 
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -103,15 +106,6 @@ export default function Home() {
         <div className="mt-8">
           <ToggleButton id="main-toggle" />
         </div>
-
-        {!appInstalled && deferredPrompt && (
-          <button
-            onClick={installApp}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-colors"
-          >
-            Install App
-          </button>
-        )}
       </div>
     </div>
   );
