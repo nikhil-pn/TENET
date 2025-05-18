@@ -40,6 +40,24 @@ const MonthlyChart = ({ isVisible, onClose, todayProductivity }) => {
     }
   }, [currentMonth, currentYear, isVisible]);
 
+  // New useEffect for real-time timer updates
+  useEffect(() => {
+    if (!isVisible) return;
+
+    // Update timer info from localStorage every second
+    const timerInterval = setInterval(() => {
+      if (typeof window !== "undefined") {
+        const currentTime = localStorage.getItem("currentTimerInfo");
+        if (currentTime) {
+          setCurrentTimerInfo(currentTime);
+        }
+      }
+    }, 1000);
+
+    // Cleanup interval when component unmounts or becomes invisible
+    return () => clearInterval(timerInterval);
+  }, [isVisible]);
+
   const generateMonthData = () => {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
