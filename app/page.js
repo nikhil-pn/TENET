@@ -4,6 +4,7 @@ import Clock from "./components/Clock";
 import ToggleButton from "./components/ToggleButton";
 import InfoButton from "./components/InfoButton";
 import MonthlyChart from "./components/MonthlyChart";
+import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
 import { useState, useEffect } from "react";
 
@@ -11,6 +12,30 @@ export default function Home() {
   const [timerStatus, setTimerStatus] = useState("");
   const [showChart, setShowChart] = useState(false);
   const [todayProductivity, setTodayProductivity] = useState("0h 0m");
+  const [appInstalled, setAppInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Check if the app is already installed or being used in standalone mode
+  useEffect(() => {
+    // Check if the app is in standalone mode (installed)
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setAppInstalled(true);
+    }
+
+    // Listen for beforeinstallprompt event to detect if app can be installed
+    window.addEventListener("beforeinstallprompt", (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Store the event so it can be triggered later
+      setDeferredPrompt(e);
+    });
+
+    // Listen for app installation
+    window.addEventListener("appinstalled", () => {
+      setAppInstalled(true);
+      setDeferredPrompt(null);
+    });
+  }, []);
 
   // Get current time only
   useEffect(() => {
@@ -46,8 +71,23 @@ export default function Home() {
     setShowChart(!showChart);
   };
 
+  const installApp = async () => {
+    if (!deferredPrompt) return;
+
+    // Show the installation prompt
+    deferredPrompt.prompt();
+
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+
+    // We no longer need the prompt. Clear it.
+    setDeferredPrompt(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 relative">
+      <SplashScreen />
+
       <InfoButton onClick={toggleChart} todayProductivity={todayProductivity} />
       <MonthlyChart
         isVisible={showChart}
@@ -63,6 +103,15 @@ export default function Home() {
         <div className="mt-8">
           <ToggleButton id="main-toggle" />
         </div>
+
+        {!appInstalled && deferredPrompt && (
+          <button
+            onClick={installApp}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-colors"
+          >
+            Install App
+          </button>
+        )}
       </div>
     </div>
   );
