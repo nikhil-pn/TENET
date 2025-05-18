@@ -85,7 +85,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 relative">
+    <div className="h-screen bg-gray-50 p-8 relative">
       <SplashScreen />
 
       <InfoButton onClick={toggleChart} todayProductivity={todayProductivity} />
@@ -98,7 +98,7 @@ export default function Home() {
         onInstall={installApp}
       />
 
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center h-full">
         {/* <div className={styles.timerStatusContainer}>
           <div className={styles.timerStatus}>{timerStatus}</div>
         </div> */}
