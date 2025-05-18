@@ -15,8 +15,7 @@ const MonthlyChart = ({
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [currentTimerInfo, setCurrentTimerInfo] = useState("00:00 / 25:00");
-
-  const totalProductivitMinutes = localStorage.getItem("productiveTime");
+  const [totalProductivityMinutes, setTotalProductivityMinutes] = useState(0);
 
   const monthNames = [
     "January",
@@ -43,6 +42,12 @@ const MonthlyChart = ({
       const currentTime = localStorage.getItem("currentTimerInfo");
       if (currentTime) {
         setCurrentTimerInfo(currentTime);
+      }
+
+      // Get total productive time
+      const productiveTime = localStorage.getItem("productiveTime");
+      if (productiveTime) {
+        setTotalProductivityMinutes(parseInt(productiveTime, 10));
       }
     }
   }, [currentMonth, currentYear, isVisible]);
@@ -159,7 +164,7 @@ const MonthlyChart = ({
     >
       <div className={styles.chartContainer}>
         <div className={styles.productivitySummary}>
-          Current: {currentTimerInfo}
+          Current Session: {currentTimerInfo}
         </div>
 
         <div className={styles.chartHeader}>
@@ -210,7 +215,7 @@ const MonthlyChart = ({
           ))}
         </div>
 
-        <div className={styles.totalTime}>Σ {totalProductivitMinutes} min</div>
+        <div className={styles.totalTime}>Σ {totalProductivityMinutes} min</div>
       </div>
     </div>
   );

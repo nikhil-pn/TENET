@@ -15,7 +15,7 @@ export default function Clock({ onTimerUpdate }) {
   const [totalProductiveMinutes, setTotalProductiveMinutes] = useState(0);
 
   // Timer settings
-  const pomodoroMinutes = 25;
+  const pomodoroMinutes = 2;
   const pomodoroSeconds = pomodoroMinutes * 60;
   const shortBreakMinutes = 1;
   const shortBreakSeconds = shortBreakMinutes * 60;
@@ -174,20 +174,22 @@ export default function Clock({ onTimerUpdate }) {
 
               // Show break completed toast
               toastShownRef.current = true;
-              toast.info(
-                `${
-                  breakType.charAt(0).toUpperCase() + breakType.slice(1)
-                } break completed! Click to start a new session.`,
-                {
-                  position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  toastId: "break-complete",
-                }
-              );
+              setTimeout(() => {
+                toast.info(
+                  `${
+                    breakType.charAt(0).toUpperCase() + breakType.slice(1)
+                  } break completed! Click to start a new session.`,
+                  {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    toastId: "break-complete",
+                  }
+                );
+              }, 0);
 
               // Stop timer and wait for user to start new session
               setIsTimerMode(false);
@@ -211,15 +213,17 @@ export default function Clock({ onTimerUpdate }) {
             if (newValue >= pomodoroSeconds && !toastShownRef.current) {
               // Show session completed toast
               toastShownRef.current = true;
-              toast.success("Session completed! Click to start a break.", {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                toastId: "pomodoro-complete",
-              });
+              setTimeout(() => {
+                toast.success("Session completed! Click to start a break.", {
+                  position: "top-right",
+                  autoClose: 5000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  toastId: "pomodoro-complete",
+                });
+              }, 0);
 
               // Save completed Pomodoro time to localStorage
               const newTotalMinutes = totalProductiveMinutes + pomodoroMinutes;
