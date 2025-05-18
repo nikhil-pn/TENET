@@ -15,9 +15,9 @@ export default function Clock({ onTimerUpdate }) {
   const [totalProductiveMinutes, setTotalProductiveMinutes] = useState(0);
 
   // Timer settings
-  const pomodoroMinutes = 2;
+  const pomodoroMinutes = 25;
   const pomodoroSeconds = pomodoroMinutes * 60;
-  const shortBreakMinutes = 1;
+  const shortBreakMinutes = 5;
   const shortBreakSeconds = shortBreakMinutes * 60;
   const longBreakMinutes = 30;
   const longBreakSeconds = longBreakMinutes * 60;
