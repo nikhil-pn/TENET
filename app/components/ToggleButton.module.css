@@ -103,3 +103,113 @@
 .toggle input:checked ~ .label {
   color: rgba(255, 0, 0, 0.9);
 }
+
+.toggleContainer {
+  position: relative;
+  width: 100px;
+  height: 50px;
+  margin: 10px auto;
+}
+
+.toggleCheckbox {
+  height: 0;
+  width: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.toggleLabel {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #dddddd;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+}
+
+.toggleLabel:after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggleCheckbox:checked + .toggleLabel {
+  background-color: #4caf50;
+}
+
+.toggleCheckbox:checked + .toggleLabel:after {
+  left: calc(100% - 45px);
+}
+
+/* Red state for when user attention is needed */
+.toggleLabel.toggle-red {
+  background-color: #f44336 !important;
+}
+
+/* Ensure the toggle button has some indication it needs attention */
+.toggleLabel.toggle-red:after {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+/* Red state for button when user attention is needed */
+.button.button-red {
+  background: #f44336 !important;
+  box-shadow: 0 10px 20px -4px rgba(244, 67, 54, 0.5),
+    inset 0 -2px 3px -1px rgba(0, 0, 0, 0.1),
+    0 -8px 12px -1px rgba(255, 255, 255, 0.3),
+    inset 0 2px 3px -1px rgba(255, 255, 255, 0.2),
+    inset 0 0 4px 1px rgba(255, 255, 255, 0.4),
+    inset 0 15px 25px 0 rgba(255, 255, 255, 0.1);
+  animation: pulse-button 1.5s infinite;
+}
+
+@keyframes pulse-button {
+  0% {
+    box-shadow: 0 10px 20px -4px rgba(244, 67, 54, 0.5),
+      inset 0 -2px 3px -1px rgba(0, 0, 0, 0.1),
+      0 -8px 12px -1px rgba(255, 255, 255, 0.3),
+      inset 0 2px 3px -1px rgba(255, 255, 255, 0.2),
+      inset 0 0 4px 1px rgba(255, 255, 255, 0.4),
+      inset 0 15px 25px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 10px 20px -4px rgba(244, 67, 54, 0.5),
+      inset 0 -2px 3px -1px rgba(0, 0, 0, 0.1),
+      0 -8px 12px -1px rgba(255, 255, 255, 0.3),
+      inset 0 2px 3px -1px rgba(255, 255, 255, 0.2),
+      inset 0 0 4px 1px rgba(255, 255, 255, 0.4),
+      inset 0 15px 25px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 15px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 10px 20px -4px rgba(244, 67, 54, 0.5),
+      inset 0 -2px 3px -1px rgba(0, 0, 0, 0.1),
+      0 -8px 12px -1px rgba(255, 255, 255, 0.3),
+      inset 0 2px 3px -1px rgba(255, 255, 255, 0.2),
+      inset 0 0 4px 1px rgba(255, 255, 255, 0.4),
+      inset 0 15px 25px 0 rgba(255, 255, 255, 0.1), 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}

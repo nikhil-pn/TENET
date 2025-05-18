@@ -1,16 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./ToggleButton.module.css";
 
-export default function ToggleButton({ onToggle, id }) {
+export default function ToggleButton({ id }) {
   const [isChecked, setIsChecked] = useState(false);
 
-  const handleToggle = () => {
-    const newState = !isChecked;
-    setIsChecked(newState);
-    if (onToggle) {
-      onToggle(newState);
-    }
+  const handleChange = (e) => {
+    setIsChecked(e.target.checked);
   };
 
   return (
@@ -20,7 +16,7 @@ export default function ToggleButton({ onToggle, id }) {
           id={id}
           type="checkbox"
           checked={isChecked}
-          onChange={handleToggle}
+          onChange={handleChange}
         />
         <span className={styles.button}></span>
         <span className={styles.label}>☼</span>

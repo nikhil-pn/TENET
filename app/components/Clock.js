@@ -10,22 +10,17 @@ export default function Clock({ onTimerUpdate }) {
   const [isPomodoroCompleted, setIsPomodoroCompleted] = useState(false);
   const [isBreakMode, setIsBreakMode] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0);
-  const [waitingForUserInput, setWaitingForUserInput] = useState(false);
+  const [waitingToStartBreak, setWaitingToStartBreak] = useState(false);
+  const [waitingToStartSession, setWaitingToStartSession] = useState(false);
   const [totalProductiveMinutes, setTotalProductiveMinutes] = useState(0);
 
   // Timer settings
-  const pomodoroMinutes = 1;
+  const pomodoroMinutes = 2;
   const pomodoroSeconds = pomodoroMinutes * 60;
   const shortBreakMinutes = 1;
   const shortBreakSeconds = shortBreakMinutes * 60;
   const longBreakMinutes = 30;
   const longBreakSeconds = longBreakMinutes * 60;
-
-  // Ref to keep track of previous timer state for resuming
-  const prevTimerState = useRef({
-    isOn: false,
-    seconds: 0,
-  });
 
   // Ref to track if toast has been shown
   const toastShownRef = useRef(false);
@@ -42,7 +37,9 @@ export default function Clock({ onTimerUpdate }) {
   useEffect(() => {
     if (onTimerUpdate) {
       let status;
-      if (waitingForUserInput) {
+      if (waitingToStartBreak) {
+        status = "Click to start break";
+      } else if (waitingToStartSession) {
         status = "Click to start next session";
       } else if (isBreakMode) {
         const breakSeconds =
@@ -67,7 +64,8 @@ export default function Clock({ onTimerUpdate }) {
   }, [
     timerSeconds,
     isBreakMode,
-    waitingForUserInput,
+    waitingToStartBreak,
+    waitingToStartSession,
     pomodoroCount,
     onTimerUpdate,
     totalProductiveMinutes,
@@ -81,39 +79,61 @@ export default function Clock({ onTimerUpdate }) {
 
     // Set up event listener for the toggle button
     const mainToggle = document.getElementById("main-toggle");
+
     if (mainToggle) {
       mainToggle.addEventListener("change", (e) => {
         const isOn = e.target.checked;
 
-        if (isOn && waitingForUserInput) {
-          // User clicked to start a new session
-          setWaitingForUserInput(false);
-          setIsBreakMode(false);
-          toastShownRef.current = false;
-          setTimerSeconds(0);
-          setIsTimerMode(true);
-        } else if (isOn) {
-          // Regular toggle on
-          setIsTimerMode(true);
-          toastShownRef.current = false;
+        if (isOn) {
+          if (waitingToStartBreak) {
+            // User clicked to start a break
+            setWaitingToStartBreak(false);
+            setIsBreakMode(true);
+            setTimerSeconds(0);
+            setIsTimerMode(true);
+            toastShownRef.current = false;
+
+            // Change toggle button back to normal
+            const toggleButton = document.querySelector(
+              `#main-toggle ~ .${styles.button}`
+            );
+            if (toggleButton) {
+              toggleButton.classList.remove("button-red");
+            }
+          } else if (waitingToStartSession) {
+            // User clicked to start a new session
+            setWaitingToStartSession(false);
+            setIsBreakMode(false);
+            setTimerSeconds(0);
+            setIsTimerMode(true);
+            toastShownRef.current = false;
+
+            // Change toggle button back to normal
+            const toggleButton = document.querySelector(
+              `#main-toggle ~ .${styles.button}`
+            );
+            if (toggleButton) {
+              toggleButton.classList.remove("button-red");
+            }
+          } else {
+            // Regular toggle on - resume timer
+            setIsTimerMode(true);
+            toastShownRef.current = false;
+          }
         } else {
           // Toggle off - pause the timer
           setIsTimerMode(false);
         }
-
-        prevTimerState.current.isOn = isOn;
       });
     }
 
     return () => {
       const mainToggle = document.getElementById("main-toggle");
       if (mainToggle) {
-        mainToggle.removeEventListener("change", (e) => {
-          setIsTimerMode(e.target.checked);
-        });
+        mainToggle.removeEventListener("change", () => {});
       }
     };
-  }, [waitingForUserInput]);
+  }, [waitingToStartBreak, waitingToStartSession]);
 
   useEffect(() => {
     let interval;
@@ -143,7 +163,7 @@ export default function Clock({ onTimerUpdate }) {
               toast.info(
                 `${
                   breakType.charAt(0).toUpperCase() + breakType.slice(1)
-                } break completed!`,
+                } break completed! Click to start a new session.`,
                 {
                   position: "top-right",
                   autoClose: 5000,
@@ -155,15 +175,21 @@ export default function Clock({ onTimerUpdate }) {
                 }
               );
 
-              // Stop timer and wait for user to start next session
+              // Stop timer and wait for user to start new session
               setIsTimerMode(false);
               setIsBreakMode(false);
-              setWaitingForUserInput(true);
+              setWaitingToStartSession(true);
 
-              // Uncheck the toggle button
+              // Uncheck the toggle button and make it red
               const mainToggle = document.getElementById("main-toggle");
+              const toggleButton = document.querySelector(
+                `#main-toggle ~ .${styles.button}`
+              );
               if (mainToggle) {
                 mainToggle.checked = false;
+              }
+              if (toggleButton) {
+                toggleButton.classList.add("button-red");
               }
             }
           } else {
@@ -171,7 +197,7 @@ export default function Clock({ onTimerUpdate }) {
             if (newValue >= pomodoroSeconds && !toastShownRef.current) {
               // Show session completed toast
               toastShownRef.current = true;
-              toast.success("Session completed! Time for a break.", {
+              toast.success("Session completed! Click to start a break.", {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
@@ -192,10 +218,21 @@ export default function Clock({ onTimerUpdate }) {
               // Increment pomodoro count
               setPomodoroCount((prevCount) => prevCount + 1);
 
-              // Switch to break mode and reset timer
-              setIsBreakMode(true);
-              setTimerSeconds(0);
-              toastShownRef.current = false;
+              // Stop timer and wait for user to start break
+              setIsTimerMode(false);
+              setWaitingToStartBreak(true);
+
+              // Uncheck the toggle button and make it red
+              const mainToggle = document.getElementById("main-toggle");
+              const toggleButton = document.querySelector(
+                `#main-toggle ~ .${styles.button}`
+              );
+              if (mainToggle) {
+                mainToggle.checked = false;
+              }
+              if (toggleButton) {
+                toggleButton.classList.add("button-red");
+              }
             }
           }
 
@@ -221,6 +258,22 @@ export default function Clock({ onTimerUpdate }) {
     totalProductiveMinutes,
     pomodoroMinutes,
   ]);
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Format seconds to HH:MM for total productive time
+  const formatTimeHours = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${mins}m`;
+  };
 
   function setClockHands() {
     let hours, minutes, seconds;
@@ -287,22 +340,6 @@ export default function Clock({ onTimerUpdate }) {
       }
     }
   }
-
-  // Format seconds to MM:SS
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  // Format seconds to HH:MM for total productive time
-  const formatTimeHours = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${mins}m`;
-  };
 
   return (
     <div className={styles.skeuomorphic}>
