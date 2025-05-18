@@ -2,11 +2,14 @@
 import { useState, useEffect } from "react";
 import styles from "./MonthlyChart.module.css";
 
-const MonthlyChart = ({ isVisible, onClose }) => {
+const MonthlyChart = ({ isVisible, onClose, todayProductivity }) => {
   const [monthData, setMonthData] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [totalMinutes, setTotalMinutes] = useState(0);
+  const [currentTimerInfo, setCurrentTimerInfo] = useState("00:00 / 25:00");
+
+  const totalProductivitMinutes = localStorage.getItem("productiveTime");
 
   const monthNames = [
     "January",
@@ -28,6 +31,12 @@ const MonthlyChart = ({ isVisible, onClose }) => {
   useEffect(() => {
     if (typeof window !== "undefined" && isVisible) {
       generateMonthData();
+
+      // Get current timer info if exists
+      const currentTime = localStorage.getItem("currentTimerInfo");
+      if (currentTime) {
+        setCurrentTimerInfo(currentTime);
+      }
     }
   }, [currentMonth, currentYear, isVisible]);
 
@@ -124,6 +133,10 @@ const MonthlyChart = ({ isVisible, onClose }) => {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className={styles.chartContainer}>
+        <div className={styles.productivitySummary}>
+          Current: {currentTimerInfo}
+        </div>
+
         <div className={styles.chartHeader}>
           <div className={styles.monthYearDisplay}>
             {monthNames[currentMonth]} {currentYear}
@@ -164,7 +177,7 @@ const MonthlyChart = ({ isVisible, onClose }) => {
           ))}
         </div>
 
-        <div className={styles.totalTime}>Σ {totalMinutes} min</div>
+        <div className={styles.totalTime}>Σ {totalProductivitMinutes} min</div>
       </div>
     </div>
   );

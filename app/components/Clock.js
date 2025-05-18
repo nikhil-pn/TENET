@@ -37,10 +37,14 @@ export default function Clock({ onTimerUpdate }) {
   useEffect(() => {
     if (onTimerUpdate) {
       let status;
+      let timerInfo;
+
       if (waitingToStartBreak) {
         status = "Click to start break";
+        timerInfo = "Complete";
       } else if (waitingToStartSession) {
         status = "Click to start next session";
+        timerInfo = "Complete";
       } else if (isBreakMode) {
         const breakSeconds =
           pomodoroCount >= 4 ? longBreakSeconds : shortBreakSeconds;
@@ -52,13 +56,23 @@ export default function Clock({ onTimerUpdate }) {
             : `Break: ${formatTime(timerSeconds)} / ${formatTime(
                 shortBreakSeconds
               )}`;
+        timerInfo = `${formatTime(timerSeconds)} / ${formatTime(breakSeconds)}`;
       } else {
         status = `Today's Productivity: ${formatTimeHours(
           totalProductiveMinutes * 60
         )} (Current: ${formatTime(timerSeconds)} / ${formatTime(
           pomodoroSeconds
         )})`;
+        timerInfo = `${formatTime(timerSeconds)} / ${formatTime(
+          pomodoroSeconds
+        )}`;
       }
+
+      // Save current timer info to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("currentTimerInfo", timerInfo);
+      }
+
       onTimerUpdate(status);
     }
   }, [
@@ -210,17 +224,25 @@ export default function Clock({ onTimerUpdate }) {
               // Save completed Pomodoro time to localStorage
               const newTotalMinutes = totalProductiveMinutes + pomodoroMinutes;
               setTotalProductiveMinutes(newTotalMinutes);
-              
+
               // Save total productivity time
               localStorage.setItem(
                 "productiveTime",
                 newTotalMinutes.toString()
               );
-              
+
               // Save daily productivity data with date information
               const today = new Date();
-              const dateKey = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-              const dailyMinutes = parseInt(localStorage.getItem(`productiveTime_${dateKey}`) || '0', 10);
+              const dateKey = `${today.getFullYear()}-${(today.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}-${today
+                .getDate()
+                .toString()
+                .padStart(2, "0")}`;
+              const dailyMinutes = parseInt(
+                localStorage.getItem(`productiveTime_${dateKey}`) || "0",
+                10
+              );
               localStorage.setItem(
                 `productiveTime_${dateKey}`,
                 (dailyMinutes + pomodoroMinutes).toString()

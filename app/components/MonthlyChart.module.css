@@ -28,6 +28,27 @@
   position: relative;
 }
 
+.productivitySummary {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background: linear-gradient(to bottom, #f5f5f5, #eaeaea);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 white;
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.currentTime {
+  display: block;
+  font-size: 16px;
+  font-weight: 400;
+  color: #777;
+  margin-top: 4px;
+}
+
 .chartHeader {
   display: flex;
   align-items: center;
