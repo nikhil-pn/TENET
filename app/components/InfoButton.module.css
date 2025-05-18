@@ -1,0 +1,41 @@
+.infoButton {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  color: #444;
+  font-size: 18px;
+  font-weight: 700;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 white;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 100;
+}
+
+.infoButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 white;
+}
+
+.infoButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 white;
+}
+
+@media (max-width: 640px) {
+  .infoButton {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    top: 16px;
+    right: 16px;
+  }
+}

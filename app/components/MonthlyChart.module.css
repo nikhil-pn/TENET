@@ -1,0 +1,239 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
+
+.chartOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.chartContainer {
+  width: 90%;
+  max-width: 520px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2),
+    inset 0 2px 0px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 20px;
+  font-family: "Inter", sans-serif;
+  color: #333;
+  position: relative;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 12px;
+}
+
+.monthYearDisplay {
+  font-size: 28px;
+  font-weight: 500;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  color: #444;
+}
+
+.todayButton {
+  background-color: #f5f5f5;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: #555;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.todayButton:hover {
+  background-color: #eaeaea;
+  transform: translateY(-1px);
+}
+
+.todayButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.navButton {
+  background: #f8f8f8;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #555;
+  font-size: 20px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.navButton:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.navButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.closeButton {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #666;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  z-index: 2;
+}
+
+.closeButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+  transform: scale(1.05);
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  background: #f8f8f8;
+}
+
+.dayHeader {
+  text-align: center;
+  padding: 10px 0;
+  font-weight: 500;
+  background-color: #f5f5f5;
+  color: #666;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.dayCell {
+  aspect-ratio: 1/1;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background-color 0.2s;
+}
+
+.dayCell:hover {
+  background-color: #f9f9f9;
+}
+
+.otherMonth {
+  background-color: #f8f8f8;
+  color: #999;
+}
+
+.dayNumber {
+  font-size: 18px;
+  font-weight: 400;
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #555;
+}
+
+.minutesValue {
+  font-size: 18px;
+  font-weight: 500;
+  color: #71a600;
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.totalTime {
+  font-size: 38px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(to bottom, #f9f9f9, #f5f5f5);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05), inset 0 1px 0 white;
+  color: #444;
+  letter-spacing: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .chartContainer {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .monthYearDisplay {
+    font-size: 22px;
+  }
+
+  .dayNumber {
+    font-size: 16px;
+  }
+
+  .minutesValue {
+    font-size: 14px;
+  }
+
+  .totalTime {
+    font-size: 32px;
+  }
+}

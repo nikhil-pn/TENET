@@ -2,11 +2,14 @@
 import Image from "next/image";
 import Clock from "./components/Clock";
 import ToggleButton from "./components/ToggleButton";
+import InfoButton from "./components/InfoButton";
+import MonthlyChart from "./components/MonthlyChart";
 import styles from "./components/Clock.module.css";
 import { useState, useEffect } from "react";
 
 export default function Home() {
   const [timerStatus, setTimerStatus] = useState("");
+  const [showChart, setShowChart] = useState(false);
 
   // Fetch productivity time from localStorage on component mount
   useEffect(() => {
@@ -22,8 +25,15 @@ export default function Home() {
     }
   }, []);
 
+  const toggleChart = () => {
+    setShowChart(!showChart);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 relative">
+      <InfoButton onClick={toggleChart} />
+      <MonthlyChart isVisible={showChart} onClose={() => setShowChart(false)} />
+
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className={styles.timerStatusContainer}>
           <div className={styles.timerStatus}>{timerStatus}</div>

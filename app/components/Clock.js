@@ -15,7 +15,7 @@ export default function Clock({ onTimerUpdate }) {
   const [totalProductiveMinutes, setTotalProductiveMinutes] = useState(0);
 
   // Timer settings
-  const pomodoroMinutes = 2;
+  const pomodoroMinutes = 25;
   const pomodoroSeconds = pomodoroMinutes * 60;
   const shortBreakMinutes = 1;
   const shortBreakSeconds = shortBreakMinutes * 60;
@@ -210,9 +210,20 @@ export default function Clock({ onTimerUpdate }) {
               // Save completed Pomodoro time to localStorage
               const newTotalMinutes = totalProductiveMinutes + pomodoroMinutes;
               setTotalProductiveMinutes(newTotalMinutes);
+              
+              // Save total productivity time
               localStorage.setItem(
                 "productiveTime",
                 newTotalMinutes.toString()
+              );
+              
+              // Save daily productivity data with date information
+              const today = new Date();
+              const dateKey = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+              const dailyMinutes = parseInt(localStorage.getItem(`productiveTime_${dateKey}`) || '0', 10);
+              localStorage.setItem(
+                `productiveTime_${dateKey}`,
+                (dailyMinutes + pomodoroMinutes).toString()
               );
 
               // Increment pomodoro count
