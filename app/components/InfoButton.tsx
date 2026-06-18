@@ -2,7 +2,12 @@
 import React from "react";
 import styles from "./InfoButton.module.css";
 
-const InfoButton = ({ onClick, todayProductivity }) => {
+interface InfoButtonProps {
+  onClick: () => void;
+  todayProductivity: string;
+}
+
+const InfoButton = ({ onClick, todayProductivity }: InfoButtonProps) => {
   return (
     <button
       className={styles.infoButton}

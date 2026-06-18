@@ -2,10 +2,14 @@
 import { useState, useEffect } from "react";
 import styles from "./ToggleButton.module.css";
 
-export default function ToggleButton({ id }) {
+interface ToggleButtonProps {
+  id: string;
+}
+
+export default function ToggleButton({ id }: ToggleButtonProps) {
   const [isChecked, setIsChecked] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(e.target.checked);
   };
 

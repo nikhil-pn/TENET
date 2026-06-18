@@ -4,7 +4,11 @@ import styles from "./Clock.module.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function Clock({ onTimerUpdate }) {
+interface ClockProps {
+  onTimerUpdate?: (status: string) => void;
+}
+
+export default function Clock({ onTimerUpdate }: ClockProps) {
   const [isTimerMode, setIsTimerMode] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isPomodoroCompleted, setIsPomodoroCompleted] = useState(false);
@@ -23,7 +27,7 @@ export default function Clock({ onTimerUpdate }) {
   const longBreakSeconds = longBreakMinutes * 60;
 
   // Ref to track if toast has been shown
-  const toastShownRef = useRef(false);
+  const toastShownRef = useRef<boolean>(false);
 
   // Load total productive time from localStorage on component mount
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function Clock({ onTimerUpdate }) {
 
     if (mainToggle) {
       mainToggle.addEventListener("change", (e) => {
-        const isOn = e.target.checked;
+        const isOn = (e.target as HTMLInputElement).checked;
 
         if (isOn) {
           if (waitingToStartBreak) {
@@ -150,7 +154,7 @@ export default function Clock({ onTimerUpdate }) {
   }, [waitingToStartBreak, waitingToStartSession]);
 
   useEffect(() => {
-    let interval;
+    let interval: ReturnType<typeof setInterval>;
 
     if (isTimerMode) {
       // Timer mode - increment seconds
@@ -197,7 +201,9 @@ export default function Clock({ onTimerUpdate }) {
               setWaitingToStartSession(true);
 
               // Uncheck the toggle button and make it red
-              const mainToggle = document.getElementById("main-toggle");
+              const mainToggle = document.getElementById(
+                "main-toggle"
+              ) as HTMLInputElement | null;
               const toggleButton = document.querySelector(
                 `#main-toggle ~ .${styles.button}`
               );
@@ -260,7 +266,9 @@ export default function Clock({ onTimerUpdate }) {
               setWaitingToStartBreak(true);
 
               // Uncheck the toggle button and make it red
-              const mainToggle = document.getElementById("main-toggle");
+              const mainToggle = document.getElementById(
+                "main-toggle"
+              ) as HTMLInputElement | null;
               const toggleButton = document.querySelector(
                 `#main-toggle ~ .${styles.button}`
               );
@@ -297,7 +305,7 @@ export default function Clock({ onTimerUpdate }) {
   ]);
 
   // Format seconds to MM:SS
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs
@@ -306,7 +314,7 @@ export default function Clock({ onTimerUpdate }) {
   };
 
   // Format seconds to HH:MM for total productive time
-  const formatTimeHours = (seconds) => {
+  const formatTimeHours = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${mins}m`;
@@ -333,7 +341,7 @@ export default function Clock({ onTimerUpdate }) {
     if (secondHand) secondHand.style.transform = `rotate(${secondDegrees}deg)`;
   }
 
-  function setupClock(style) {
+  function setupClock(style: string) {
     const hourMarksElement = document.getElementById(`${style}-hour-marks`);
     const clockFaceElement = document.querySelector(`.${styles.clockFace}`);
 
@@ -357,7 +365,7 @@ export default function Clock({ onTimerUpdate }) {
       // Create hour numbers
       const hourNumber = document.createElement("div");
       hourNumber.className = styles.hourNumber;
-      hourNumber.textContent = i === 0 ? 12 : i;
+      hourNumber.textContent = String(i === 0 ? 12 : i);
 
       const angle = i * 30;
       const radius = 110;

@@ -8,12 +8,20 @@ import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
 import { useState, useEffect } from "react";
 
+// The beforeinstallprompt event is not part of the standard DOM lib types yet,
+// so we declare the minimal shape we rely on here.
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 export default function Home() {
   const [timerStatus, setTimerStatus] = useState("");
   const [showChart, setShowChart] = useState(false);
   const [todayProductivity, setTodayProductivity] = useState("0h 0m");
   const [appInstalled, setAppInstalled] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   // Check if the app is already installed or being used in standalone mode
   useEffect(() => {
@@ -27,7 +35,7 @@ export default function Home() {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Store the event so it can be triggered later
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     });
 
     // Listen for app installation

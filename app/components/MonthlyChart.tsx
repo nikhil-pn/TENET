@@ -2,6 +2,21 @@
 import { useState, useEffect } from "react";
 import styles from "./MonthlyChart.module.css";
 
+interface DayData {
+  date: number;
+  isCurrentMonth: boolean;
+  minutes: number;
+}
+
+interface MonthlyChartProps {
+  isVisible: boolean;
+  onClose: () => void;
+  todayProductivity: string;
+  appInstalled: boolean;
+  deferredPrompt: unknown;
+  onInstall: () => void;
+}
+
 const MonthlyChart = ({
   isVisible,
   onClose,
@@ -9,8 +24,8 @@ const MonthlyChart = ({
   appInstalled,
   deferredPrompt,
   onInstall,
-}) => {
-  const [monthData, setMonthData] = useState([]);
+}: MonthlyChartProps) => {
+  const [monthData, setMonthData] = useState<DayData[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [totalMinutes, setTotalMinutes] = useState(0);
@@ -183,7 +198,7 @@ const MonthlyChart = ({
               ↓
             </button>
 
-            {!appInstalled && deferredPrompt && (
+            {!appInstalled && Boolean(deferredPrompt) && (
               <button onClick={onInstall} className={styles.installButton}>
                 Install App
               </button>
