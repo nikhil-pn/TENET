@@ -230,11 +230,19 @@ const MonthlyChart = ({
             <div className={styles.todayButton} onClick={handleToday}>
               Today
             </div>
-            <button className={styles.navButton} onClick={handlePrevMonth}>
-              ↑
+            <button
+              className={styles.navButton}
+              onClick={handlePrevMonth}
+              aria-label="Previous month"
+            >
+              ‹
             </button>
-            <button className={styles.navButton} onClick={handleNextMonth}>
-              ↓
+            <button
+              className={styles.navButton}
+              onClick={handleNextMonth}
+              aria-label="Next month"
+            >
+              ›
             </button>
             {!appInstalled && Boolean(deferredPrompt) && (
               <button onClick={onInstall} className={styles.installButton}>

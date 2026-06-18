@@ -2,12 +2,10 @@
 import Image from "next/image";
 import Clock from "./components/Clock";
 import ToggleButton from "./components/ToggleButton";
-import InfoButton from "./components/InfoButton";
 import MonthlyChart from "./components/MonthlyChart";
-import TodoButton from "./components/TodoButton";
 import TodoPanel from "./components/TodoPanel";
-import HabitButton from "./components/HabitButton";
 import HabitPanel from "./components/HabitPanel";
+import NavDock, { type DockPanel } from "./components/NavDock";
 import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
 import { useState, useEffect } from "react";
@@ -21,9 +19,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function Home() {
   const [timerStatus, setTimerStatus] = useState("");
-  const [showChart, setShowChart] = useState(false);
-  const [showTodo, setShowTodo] = useState(false);
-  const [showHabits, setShowHabits] = useState(false);
+  const [activePanel, setActivePanel] = useState<DockPanel | null>(null);
   const [todayProductivity, setTodayProductivity] = useState("0h 0m");
   const [appInstalled, setAppInstalled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
@@ -81,23 +77,9 @@ export default function Home() {
     }
   }, []);
 
-  const toggleChart = () => {
-    setShowChart((prev) => !prev);
-    setShowTodo(false);
-    setShowHabits(false);
-  };
-
-  const toggleTodo = () => {
-    setShowTodo((prev) => !prev);
-    setShowChart(false);
-    setShowHabits(false);
-  };
-
-  const toggleHabits = () => {
-    setShowHabits((prev) => !prev);
-    setShowChart(false);
-    setShowTodo(false);
-  };
+  const closePanel = () => setActivePanel(null);
+  const selectPanel = (panel: DockPanel) =>
+    setActivePanel((cur) => (cur === panel ? null : panel));
 
   const installApp = async () => {
     if (!deferredPrompt) return;
@@ -116,31 +98,26 @@ export default function Home() {
     <div className="h-screen bg-gray-50 p-8 relative">
       <SplashScreen />
 
-      <InfoButton onClick={toggleChart} todayProductivity={todayProductivity} />
       <MonthlyChart
-        isVisible={showChart}
-        onClose={() => setShowChart(false)}
+        isVisible={activePanel === "calendar"}
+        onClose={closePanel}
         todayProductivity={todayProductivity}
         appInstalled={appInstalled}
         deferredPrompt={deferredPrompt}
         onInstall={installApp}
       />
-
-      <TodoButton onClick={toggleTodo} />
-      <TodoPanel isVisible={showTodo} onClose={() => setShowTodo(false)} />
-
-      <HabitButton onClick={toggleHabits} />
-      <HabitPanel isVisible={showHabits} onClose={() => setShowHabits(false)} />
+      <TodoPanel isVisible={activePanel === "tasks"} onClose={closePanel} />
+      <HabitPanel isVisible={activePanel === "habits"} onClose={closePanel} />
 
       <div className="flex flex-col items-center justify-center h-full">
-        {/* <div className={styles.timerStatusContainer}>
-          <div className={styles.timerStatus}>{timerStatus}</div>
-        </div> */}
         <Clock onTimerUpdate={() => {}} />
         <div className="mt-8">
           <ToggleButton id="main-toggle" />
         </div>
+        <p className="mt-3 text-sm text-gray-400">Tap to start a 25-min focus</p>
       </div>
+
+      <NavDock active={activePanel} onSelect={selectPanel} />
     </div>
   );
 }
