@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import styles from "./Clock.module.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { loadTodos, saveTodos, creditPomodoro } from "@/lib/storage";
+import { getActiveSessionTask, clearActiveSessionTask } from "@/lib/session";
 
 interface ClockProps {
   onTimerUpdate?: (status: string) => void;
@@ -257,6 +259,15 @@ export default function Clock({ onTimerUpdate }: ClockProps) {
                 `productiveTime_${dateKey}`,
                 (dailyMinutes + pomodoroMinutes).toString()
               );
+
+              // Credit this completed session to the focused task, if any.
+              const activeTaskId = getActiveSessionTask();
+              if (activeTaskId) {
+                saveTodos(
+                  creditPomodoro(loadTodos(), activeTaskId, pomodoroMinutes)
+                );
+                clearActiveSessionTask();
+              }
 
               // Increment pomodoro count
               setPomodoroCount((prevCount) => prevCount + 1);

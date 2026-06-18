@@ -15,10 +15,35 @@ import {
   deleteTodo,
   addTodoForDate,
   todosForDate,
-  countsByDate,
   setTodoDate,
 } from "@/lib/storage";
+import {
+  getQuadrant,
+  quadrantCountsByDate,
+  QUADRANT_META,
+  type Quadrant,
+} from "@/lib/prioritization";
 import styles from "./MonthlyChart.module.css";
+
+/** Neutral colour for tasks with at least one Eisenhower axis still unset. */
+const UNCLASSIFIED_COLOR = "#9e9e9e";
+
+/** Up to 3 dot colours for a day cell, ordered q1 → q2 → q3 → q4 → unclassified. */
+function dayDotColors(tally: {
+  q1: number;
+  q2: number;
+  q3: number;
+  q4: number;
+  unclassified: number;
+}): string[] {
+  const dots: string[] = [];
+  const order: Quadrant[] = ["q1", "q2", "q3", "q4"];
+  for (const q of order) {
+    for (let i = 0; i < tally[q]; i++) dots.push(QUADRANT_META[q].color);
+  }
+  for (let i = 0; i < tally.unclassified; i++) dots.push(UNCLASSIFIED_COLOR);
+  return dots.slice(0, 3);
+}
 
 interface DayData extends MonthCell {
   minutes: number;
@@ -151,7 +176,7 @@ const MonthlyChart = ({
     setSelectedKey(dateToKey(today));
   };
 
-  const counts = useMemo(() => countsByDate(todos), [todos]);
+  const quadCounts = useMemo(() => quadrantCountsByDate(todos), [todos]);
   const selectedTodos = useMemo(
     () => todosForDate(todos, selectedKey),
     [todos, selectedKey]
@@ -256,7 +281,11 @@ const MonthlyChart = ({
           ))}
 
           {monthData.map((day, index) => {
-            const count = counts[day.dateKey] ?? 0;
+            const tally = quadCounts[day.dateKey];
+            const count = tally
+              ? tally.q1 + tally.q2 + tally.q3 + tally.q4 + tally.unclassified
+              : 0;
+            const dotColors = tally ? dayDotColors(tally) : [];
             const isSelected = day.dateKey === selectedKey;
             return (
               <button
@@ -278,10 +307,14 @@ const MonthlyChart = ({
                 }`}
               >
                 <div className={styles.dayNumber}>{day.date}</div>
-                {count > 0 && (
+                {dotColors.length > 0 && (
                   <div className={styles.taskDots}>
-                    {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
-                      <span key={i} className={styles.taskDot} />
+                    {dotColors.map((color, i) => (
+                      <span
+                        key={i}
+                        className={styles.taskDot}
+                        style={{ background: color }}
+                      />
                     ))}
                   </div>
                 )}
@@ -300,7 +333,9 @@ const MonthlyChart = ({
             <div className={styles.emptyDay}>Nothing planned for this day.</div>
           ) : (
             <ul className={styles.dayList}>
-              {selectedTodos.map((todo) => (
+              {selectedTodos.map((todo) => {
+                const q = getQuadrant(todo);
+                return (
                 <li key={todo.id} className={styles.dayItem}>
                   <label className={styles.dayItemLabel}>
                     <input
@@ -308,6 +343,11 @@ const MonthlyChart = ({
                       className={styles.dayCheckbox}
                       checked={todo.done}
                       onChange={() => setTodos((prev) => toggleTodo(prev, todo.id))}
+                    />
+                    <span
+                      className={q ? styles.qDot : `${styles.qDot} ${styles.qDotUnclassified}`}
+                      style={q ? { background: QUADRANT_META[q].color } : undefined}
+                      aria-hidden="true"
                     />
                     <span
                       className={todo.done ? styles.dayTitleDone : styles.dayTitle}
@@ -335,7 +375,8 @@ const MonthlyChart = ({
                     </button>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           <div className={styles.dayAddRow}>

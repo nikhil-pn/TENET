@@ -20,6 +20,31 @@ export interface Todo {
   date?: DateKey;
   /** Reserved for foreground reminders. Unused in the v1 checklist UI. */
   dueAt?: Timestamp;
+
+  // ── Eisenhower / time-audit (Warikoo). All optional → back-compatible. ──
+  /** Matters to long-term goals. undefined ⇒ unclassified. */
+  important?: boolean;
+  /** Time-bound. undefined ⇒ unclassified. */
+  urgent?: boolean;
+  /** The "dimension of time": user's estimate in minutes. */
+  estimatedMinutes?: number;
+  /** Q3 action — handed off. Excluded from the active time-mix. */
+  delegated?: boolean;
+  /** Q4 action — consciously abandoned. Excluded from the active time-mix. */
+  dropped?: boolean;
+  /** Completed focus sessions logged against this task (Pomodoro link). */
+  pomodoroCount?: number;
+  /** Measured focus minutes from completed Pomodoros (shifts the mix estimated→actual). */
+  actualMinutes?: number;
+}
+
+/** One per calendar day — the end-of-day satisfaction check + 10-day cycle. */
+export interface DayLog {
+  date: DateKey;
+  /** 0–100. */
+  satisfactionScore: number;
+  satisfactionNote?: string;
+  loggedAt: Timestamp;
 }
 
 export interface Habit {
@@ -50,4 +75,5 @@ export interface TenetData {
   version: 1;
   todos: Todo[];
   habits: Habit[];
+  dayLogs?: DayLog[];
 }

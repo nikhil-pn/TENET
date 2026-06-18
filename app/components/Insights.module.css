@@ -1,0 +1,233 @@
+.wrapper {
+  font-family: "Inter", sans-serif;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.emptyState {
+  text-align: center;
+  color: #999;
+  font-size: 15px;
+  padding: 32px 16px;
+  margin: 0;
+}
+
+/* ── 100% stacked bar ── */
+.bar {
+  display: flex;
+  height: 28px;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: flex-grow 0.3s ease;
+}
+
+/* ── Legend ── */
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.legendName {
+  flex: 1;
+  min-width: 0;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendPct {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.modeNote {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* ── Important-share gauge ── */
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gaugeLabelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.gaugeLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.gaugeValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* NOT overflow:hidden — the marker label sits above the track and must not clip. */
+.gaugeTrack {
+  position: relative;
+  height: 14px;
+  width: 100%;
+  /* top margin leaves room for the marker's "75%" tick label */
+  margin-top: 18px;
+  background: #eaeaea;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.gaugeFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  max-width: 100%;
+  /* round only the fill so it stays clean while the track wrapper is unclipped */
+  border-radius: 999px;
+  background: linear-gradient(90deg, #81c784, #4caf50);
+  transition: width 0.3s ease;
+}
+
+.gaugeMarker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: #555;
+  transform: translateX(-1px);
+}
+
+.gaugeMarkerLabel {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #777;
+  white-space: nowrap;
+}
+
+.caption {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+/* ── Stats row ── */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.stat strong {
+  color: #333;
+  font-weight: 700;
+}
+
+.statDivider {
+  color: #ccc;
+}
+
+/* ── Nudges ── */
+.nudges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nudge {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8f8f8;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.nudgeText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #555;
+}
+
+.nudgeDismiss {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.nudgeDismiss:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #666;
+}
+
+@media (max-width: 640px) {
+  .legend {
+    grid-template-columns: 1fr;
+  }
+}

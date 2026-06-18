@@ -13,8 +13,8 @@
 
 .todoContainer {
   width: 90%;
-  max-width: 460px;
-  max-height: 80vh;
+  max-width: 520px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   background: white;
@@ -222,6 +222,136 @@
   text-align: center;
   font-size: 14px;
   color: #777;
+}
+
+/* ── Tabs ── */
+.tabBar {
+  display: flex;
+  gap: 4px;
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+
+.tab,
+.tabActive {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  background: transparent;
+  color: #777;
+  transition: all 0.2s;
+}
+
+.tabActive {
+  background: #fff;
+  color: #333;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.tabBody {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Classify-on-add strip ── */
+.classifyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.flag,
+.flagOnImp,
+.flagOnUrg {
+  padding: 5px 10px;
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.flagOnImp {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
+}
+
+.flagOnUrg {
+  background: #ff9800;
+  border-color: #ff9800;
+  color: #fff;
+}
+
+.chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.estChip,
+.chipActive {
+  padding: 5px 9px;
+  font-size: 12px;
+  font-family: "Inter", sans-serif;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f8f8f8;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chipActive {
+  background: #eef6ee;
+  border-color: #4caf50;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.quadBadge {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.hintLine {
+  font-size: 12.5px;
+  color: #777;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ── Quadrant dot on list rows ── */
+.qDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #ccc;
+}
+
+.qDot[data-unclassified] {
+  background: transparent;
+  border: 1.5px dashed #ccc;
 }
 
 @media (max-width: 640px) {
