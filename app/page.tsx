@@ -4,6 +4,8 @@ import Clock from "./components/Clock";
 import ToggleButton from "./components/ToggleButton";
 import InfoButton from "./components/InfoButton";
 import MonthlyChart from "./components/MonthlyChart";
+import TodoButton from "./components/TodoButton";
+import TodoPanel from "./components/TodoPanel";
 import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
 import { useState, useEffect } from "react";
@@ -18,6 +20,7 @@ interface BeforeInstallPromptEvent extends Event {
 export default function Home() {
   const [timerStatus, setTimerStatus] = useState("");
   const [showChart, setShowChart] = useState(false);
+  const [showTodo, setShowTodo] = useState(false);
   const [todayProductivity, setTodayProductivity] = useState("0h 0m");
   const [appInstalled, setAppInstalled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
@@ -76,7 +79,13 @@ export default function Home() {
   }, []);
 
   const toggleChart = () => {
-    setShowChart(!showChart);
+    setShowChart((prev) => !prev);
+    setShowTodo(false);
+  };
+
+  const toggleTodo = () => {
+    setShowTodo((prev) => !prev);
+    setShowChart(false);
   };
 
   const installApp = async () => {
@@ -105,6 +114,9 @@ export default function Home() {
         deferredPrompt={deferredPrompt}
         onInstall={installApp}
       />
+
+      <TodoButton onClick={toggleTodo} />
+      <TodoPanel isVisible={showTodo} onClose={() => setShowTodo(false)} />
 
       <div className="flex flex-col items-center justify-center h-full">
         {/* <div className={styles.timerStatusContainer}>
