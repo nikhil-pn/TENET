@@ -1,53 +1,8 @@
-import type { DateKey, Todo } from "./types";
+import type { Todo } from "./types";
+import { createId, readJSON, writeJSON } from "./persist";
 
 /** localStorage key for the to-do list. Versioned so the shape can evolve safely. */
 const TODOS_KEY = "tenet.todos.v1";
-
-// ── Persistence seam ─────────────────────────────────────────────────────────
-// These two functions are the ONLY code that knows WHERE bytes live. For the web
-// app that's localStorage; a future Electron edition swaps just these for the
-// filesystem/IPC, leaving the domain ops and UI untouched.
-
-function readJSON<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    // Corrupt JSON or storage unavailable (e.g. private mode) — fall back safely.
-    return fallback;
-  }
-}
-
-function writeJSON<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Quota exceeded or storage blocked — drop silently so the UI never crashes.
-  }
-}
-
-// ── Portable utilities ───────────────────────────────────────────────────────
-
-/** Format a date as a local "YYYY-MM-DD" key (matches the inline pattern in Clock). */
-export function dateToKey(d: Date = new Date()): DateKey {
-  const year = d.getFullYear();
-  const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  const day = d.getDate().toString().padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-/** Generate a stable unique id. Uses crypto.randomUUID when available. */
-export function createId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  // Fallback for any context lacking crypto.randomUUID. Unique enough for a
-  // single user entering tasks by hand.
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 // ── Validation ───────────────────────────────────────────────────────────────
 

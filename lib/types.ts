@@ -22,6 +22,25 @@ export interface Todo {
   dueAt?: Timestamp;
 }
 
+export interface Habit {
+  id: string;
+  name: string;
+  /** Optional leading glyph (e.g. "🏋️"). Reserved — not set by the v1 UI. */
+  emoji?: string;
+  createdAt: Timestamp;
+  /** Manual sort position. Lets us reorder later without a data migration. */
+  order: number;
+  /**
+   * Map of "YYYY-MM-DD" → amount done that day (1 for a simple check-off).
+   * Stored as a count so quantified habits (e.g. glasses of water) need no migration.
+   */
+  checkins: Record<DateKey, number>;
+  /** Reserved — required amount per day to count as done (quantified habits). Defaults to 1. */
+  targetPerDay?: number;
+  /** Reserved — hide without deleting history. */
+  archived?: boolean;
+}
+
 /**
  * Top-level portable snapshot of all app data. This is the shape JSON
  * export/import will use, and the shape a future Electron file / Obsidian-vault
@@ -30,4 +49,5 @@ export interface Todo {
 export interface TenetData {
   version: 1;
   todos: Todo[];
+  habits: Habit[];
 }
