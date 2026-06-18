@@ -1,10 +1,26 @@
 "use client";
-import { useState, useEffect } from "react";
+// Calendar + day planner (opened from the "i" button). Each day shows focus
+// minutes and planned-task indicators; click a day to see/add its tasks; the
+// quick-add field accepts natural language ("next monday gym"). Also keeps the
+// session/total productivity display. (Evolved from the monthly chart.)
+import { useState, useEffect, useMemo } from "react";
+import type { Todo } from "@/lib/types";
+import { dateToKey } from "@/lib/persist";
+import { buildMonthMatrix, type MonthCell } from "@/lib/calendar";
+import { parseWhen } from "@/lib/dates";
+import {
+  loadTodos,
+  saveTodos,
+  toggleTodo,
+  deleteTodo,
+  addTodoForDate,
+  todosForDate,
+  countsByDate,
+  setTodoDate,
+} from "@/lib/storage";
 import styles from "./MonthlyChart.module.css";
 
-interface DayData {
-  date: number;
-  isCurrentMonth: boolean;
+interface DayData extends MonthCell {
   minutes: number;
 }
 
@@ -17,10 +33,36 @@ interface MonthlyChartProps {
   onInstall: () => void;
 }
 
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+/** Friendly label for a "YYYY-MM-DD" key, parsed in local time. */
+function formatKey(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 const MonthlyChart = ({
   isVisible,
   onClose,
-  todayProductivity,
   appInstalled,
   deferredPrompt,
   onInstall,
@@ -28,123 +70,61 @@ const MonthlyChart = ({
   const [monthData, setMonthData] = useState<DayData[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [totalMinutes, setTotalMinutes] = useState(0);
   const [currentTimerInfo, setCurrentTimerInfo] = useState("00:00 / 25:00");
   const [totalProductivityMinutes, setTotalProductivityMinutes] = useState(0);
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+  // Planner state
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<string>(dateToKey());
+  const [quick, setQuick] = useState("");
+  const [dayDraft, setDayDraft] = useState("");
 
-  const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
+  // Build the month grid + read per-day minutes and the all-time total.
   useEffect(() => {
     if (typeof window !== "undefined" && isVisible) {
-      generateMonthData();
+      const cells = buildMonthMatrix(currentYear, currentMonth);
+      const enriched: DayData[] = cells.map((cell) => {
+        let minutes = 0;
+        if (cell.isCurrentMonth) {
+          const saved = localStorage.getItem(`productiveTime_${cell.dateKey}`);
+          if (saved) minutes = parseInt(saved, 10);
+        }
+        return { ...cell, minutes };
+      });
+      setMonthData(enriched);
 
-      // Get current timer info if exists
       const currentTime = localStorage.getItem("currentTimerInfo");
-      if (currentTime) {
-        setCurrentTimerInfo(currentTime);
-      }
-
-      // Get total productive time
+      if (currentTime) setCurrentTimerInfo(currentTime);
       const productiveTime = localStorage.getItem("productiveTime");
-      if (productiveTime) {
-        setTotalProductivityMinutes(parseInt(productiveTime, 10));
-      }
+      if (productiveTime) setTotalProductivityMinutes(parseInt(productiveTime, 10));
     }
   }, [currentMonth, currentYear, isVisible]);
 
-  // New useEffect for real-time timer updates
+  // Real-time session info while open.
   useEffect(() => {
     if (!isVisible) return;
-
-    // Update timer info from localStorage every second
     const timerInterval = setInterval(() => {
       if (typeof window !== "undefined") {
         const currentTime = localStorage.getItem("currentTimerInfo");
-        if (currentTime) {
-          setCurrentTimerInfo(currentTime);
-        }
+        if (currentTime) setCurrentTimerInfo(currentTime);
       }
     }, 1000);
-
-    // Cleanup interval when component unmounts or becomes invisible
     return () => clearInterval(timerInterval);
   }, [isVisible]);
 
-  const generateMonthData = () => {
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    // Get previous month's last days to fill in the beginning of the calendar
-    const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-
-    let days = [];
-    let total = 0;
-
-    // Previous month's days
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const day = prevMonthLastDay - i;
-      days.push({
-        date: day,
-        isCurrentMonth: false,
-        minutes: 0,
-      });
+  // Load todos when the panel opens (picks up edits made in the checklist).
+  useEffect(() => {
+    if (isVisible) {
+      setTodos(loadTodos());
+      setHydrated(true);
     }
+  }, [isVisible]);
 
-    // Current month's days
-    for (let day = 1; day <= daysInMonth; day++) {
-      // Get productivity data from localStorage if available
-      let minutes = 0;
-      const dateKey = `${currentYear}-${(currentMonth + 1)
-        .toString()
-        .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-
-      if (typeof window !== "undefined") {
-        const savedData = localStorage.getItem(`productiveTime_${dateKey}`);
-        if (savedData) {
-          minutes = parseInt(savedData, 10);
-        }
-      }
-
-      total += minutes;
-      days.push({
-        date: day,
-        isCurrentMonth: true,
-        minutes: minutes,
-      });
-    }
-
-    // Next month's days to fill the calendar grid
-    const totalDaysShown = Math.ceil(days.length / 7) * 7;
-    const nextMonthDays = totalDaysShown - days.length;
-
-    for (let day = 1; day <= nextMonthDays; day++) {
-      days.push({
-        date: day,
-        isCurrentMonth: false,
-        minutes: 0,
-      });
-    }
-
-    setMonthData(days);
-    setTotalMinutes(total);
-  };
+  // Persist after the initial load so the empty starting state can't clobber storage.
+  useEffect(() => {
+    if (hydrated) saveTodos(todos);
+  }, [todos, hydrated]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -168,6 +148,41 @@ const MonthlyChart = ({
     const today = new Date();
     setCurrentMonth(today.getMonth());
     setCurrentYear(today.getFullYear());
+    setSelectedKey(dateToKey(today));
+  };
+
+  const counts = useMemo(() => countsByDate(todos), [todos]);
+  const selectedTodos = useMemo(
+    () => todosForDate(todos, selectedKey),
+    [todos, selectedKey]
+  );
+  const parsed = useMemo(() => parseWhen(quick), [quick]);
+  const quickTarget = parsed.date ?? selectedKey;
+
+  const jumpTo = (key: string) => {
+    const [y, m] = key.split("-").map(Number);
+    setCurrentYear(y);
+    setCurrentMonth(m - 1);
+  };
+
+  const handleQuickAdd = () => {
+    const title = parsed.title.trim();
+    if (title === "") return;
+    setTodos((prev) => addTodoForDate(prev, title, quickTarget));
+    setSelectedKey(quickTarget);
+    jumpTo(quickTarget);
+    setQuick("");
+  };
+
+  const handleDayAdd = () => {
+    if (dayDraft.trim() === "") return;
+    setTodos((prev) => addTodoForDate(prev, dayDraft, selectedKey));
+    setDayDraft("");
+  };
+
+  const handleSelectCell = (cell: DayData) => {
+    setSelectedKey(cell.dateKey);
+    if (!cell.isCurrentMonth) jumpTo(cell.dateKey);
   };
 
   if (!isVisible) return null;
@@ -190,14 +205,12 @@ const MonthlyChart = ({
             <div className={styles.todayButton} onClick={handleToday}>
               Today
             </div>
-
             <button className={styles.navButton} onClick={handlePrevMonth}>
               ↑
             </button>
             <button className={styles.navButton} onClick={handleNextMonth}>
               ↓
             </button>
-
             {!appInstalled && Boolean(deferredPrompt) && (
               <button onClick={onInstall} className={styles.installButton}>
                 Install App
@@ -206,28 +219,148 @@ const MonthlyChart = ({
           </div>
         </div>
 
+        {/* Natural-language quick add */}
+        <div className={styles.quickRow}>
+          <input
+            className={styles.quickInput}
+            type="text"
+            value={quick}
+            placeholder="Add a task… e.g. 'next monday gym'"
+            onChange={(e) => setQuick(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleQuickAdd();
+              }
+            }}
+            aria-label="Quick-add a task with a natural-language date"
+          />
+          <button
+            className={styles.quickAddBtn}
+            onClick={handleQuickAdd}
+            disabled={parsed.title.trim() === ""}
+          >
+            Add
+          </button>
+        </div>
+        <div className={styles.chip}>
+          → <span className={styles.chipDate}>{formatKey(quickTarget)}</span>
+          {parsed.date ? "" : " (selected day)"}
+        </div>
+
         <div className={styles.calendarGrid}>
-          {/* Day name headers */}
           {dayNames.map((day, index) => (
             <div key={`header-${index}`} className={styles.dayHeader}>
               {day}
             </div>
           ))}
 
-          {/* Calendar days */}
-          {monthData.map((day, index) => (
-            <div
-              key={`day-${index}`}
-              className={`${styles.dayCell} ${
-                !day.isCurrentMonth ? styles.otherMonth : ""
-              }`}
+          {monthData.map((day, index) => {
+            const count = counts[day.dateKey] ?? 0;
+            const isSelected = day.dateKey === selectedKey;
+            return (
+              <button
+                key={`day-${index}`}
+                type="button"
+                onClick={() => handleSelectCell(day)}
+                className={[
+                  styles.dayCell,
+                  !day.isCurrentMonth ? styles.otherMonth : "",
+                  day.isToday ? styles.today : "",
+                  isSelected ? styles.selected : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={isSelected}
+                aria-current={day.isToday ? "date" : undefined}
+                aria-label={`${monthNames[currentMonth]} ${day.date}, ${count} task${
+                  count === 1 ? "" : "s"
+                }`}
+              >
+                <div className={styles.dayNumber}>{day.date}</div>
+                {count > 0 && (
+                  <div className={styles.taskDots}>
+                    {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
+                      <span key={i} className={styles.taskDot} />
+                    ))}
+                  </div>
+                )}
+                {day.minutes > 0 && (
+                  <div className={styles.minutesValue}>{day.minutes}</div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Selected-day detail */}
+        <div className={styles.dayDetail}>
+          <div className={styles.dayDetailHeader}>{formatKey(selectedKey)}</div>
+          {selectedTodos.length === 0 ? (
+            <div className={styles.emptyDay}>Nothing planned for this day.</div>
+          ) : (
+            <ul className={styles.dayList}>
+              {selectedTodos.map((todo) => (
+                <li key={todo.id} className={styles.dayItem}>
+                  <label className={styles.dayItemLabel}>
+                    <input
+                      type="checkbox"
+                      className={styles.dayCheckbox}
+                      checked={todo.done}
+                      onChange={() => setTodos((prev) => toggleTodo(prev, todo.id))}
+                    />
+                    <span
+                      className={todo.done ? styles.dayTitleDone : styles.dayTitle}
+                    >
+                      {todo.title}
+                    </span>
+                  </label>
+                  <div className={styles.dayActions}>
+                    <button
+                      className={styles.dayIconBtn}
+                      title="Move to backlog (unschedule)"
+                      aria-label={`Unschedule "${todo.title}"`}
+                      onClick={() =>
+                        setTodos((prev) => setTodoDate(prev, todo.id, undefined))
+                      }
+                    >
+                      ↩
+                    </button>
+                    <button
+                      className={`${styles.dayIconBtn} ${styles.dayDelete}`}
+                      aria-label={`Delete "${todo.title}"`}
+                      onClick={() => setTodos((prev) => deleteTodo(prev, todo.id))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className={styles.dayAddRow}>
+            <input
+              className={styles.quickInput}
+              type="text"
+              value={dayDraft}
+              placeholder={`Add to ${formatKey(selectedKey)}…`}
+              onChange={(e) => setDayDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleDayAdd();
+                }
+              }}
+              aria-label="Add a task to the selected day"
+            />
+            <button
+              className={styles.quickAddBtn}
+              onClick={handleDayAdd}
+              disabled={dayDraft.trim() === ""}
             >
-              <div className={styles.dayNumber}>{day.date}</div>
-              {day.minutes > 0 && (
-                <div className={styles.minutesValue}>{day.minutes}</div>
-              )}
-            </div>
-          ))}
+              Add
+            </button>
+          </div>
         </div>
 
         <div className={styles.totalTime}>Σ {totalProductivityMinutes} min</div>

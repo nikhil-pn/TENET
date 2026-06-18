@@ -8,6 +8,7 @@ import {
   toggleTodo,
   deleteTodo,
 } from "@/lib/storage";
+import { dateToKey } from "@/lib/persist";
 import styles from "./TodoPanel.module.css";
 
 interface TodoPanelProps {
@@ -21,11 +22,13 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
   const [hydrated, setHydrated] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load persisted todos after mount (never read storage during render).
+  // Load persisted todos when the panel opens (picks up edits from the calendar).
   useEffect(() => {
-    setTodos(loadTodos());
-    setHydrated(true);
-  }, []);
+    if (isVisible) {
+      setTodos(loadTodos());
+      setHydrated(true);
+    }
+  }, [isVisible]);
 
   // Persist on change, but only after the initial load so the empty starting
   // state can't clobber stored data.
@@ -65,8 +68,12 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
 
   if (!isVisible) return null;
 
-  const sorted = [...todos].sort((a, b) => a.order - b.order);
-  const remaining = todos.filter((t) => !t.done).length;
+  // Checklist shows the backlog (undated) + anything due today; scheduled
+  // future tasks live on the calendar instead.
+  const todayKey = dateToKey();
+  const visible = todos.filter((t) => !t.date || t.date === todayKey);
+  const sorted = [...visible].sort((a, b) => a.order - b.order);
+  const remaining = visible.filter((t) => !t.done).length;
   const todayLabel = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "short",
@@ -157,7 +164,7 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
           <div className={styles.footer}>
             {remaining === 0
               ? "All done 🎉"
-              : `${remaining} of ${todos.length} remaining`}
+              : `${remaining} of ${visible.length} remaining`}
           </div>
         )}
       </div>

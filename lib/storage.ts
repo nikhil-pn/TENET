@@ -1,4 +1,4 @@
-import type { Todo } from "./types";
+import type { DateKey, Todo } from "./types";
 import { createId, readJSON, writeJSON } from "./persist";
 
 /** localStorage key for the to-do list. Versioned so the shape can evolve safely. */
@@ -62,4 +62,61 @@ export function toggleTodo(todos: Todo[], id: string): Todo[] {
 
 export function deleteTodo(todos: Todo[], id: string): Todo[] {
   return todos.filter((t) => t.id !== id);
+}
+
+// ── Planner ops (scheduling todos onto calendar dates) ─────────────────────────
+
+/** Tasks scheduled to a specific local date, sorted by manual order. */
+export function todosForDate(todos: Todo[], dateKey: DateKey): Todo[] {
+  return todos
+    .filter((t) => t.date === dateKey)
+    .sort((a, b) => a.order - b.order);
+}
+
+/** Add a new task already pinned to a date. */
+export function addTodoForDate(
+  todos: Todo[],
+  title: string,
+  dateKey: DateKey
+): Todo[] {
+  const trimmed = title.trim();
+  if (trimmed === "") return todos;
+  const maxOrder = todos.reduce((max, t) => Math.max(max, t.order), 0);
+  const todo: Todo = {
+    id: createId(),
+    title: trimmed,
+    done: false,
+    createdAt: Date.now(),
+    order: maxOrder + 1,
+    date: dateKey,
+  };
+  return [...todos, todo];
+}
+
+/** Schedule/reschedule (pass a key) or unschedule (pass undefined) a task. */
+export function setTodoDate(
+  todos: Todo[],
+  id: string,
+  dateKey: DateKey | undefined
+): Todo[] {
+  return todos.map((t) => {
+    if (t.id !== id) return t;
+    const next: Todo = { ...t };
+    if (dateKey === undefined) {
+      delete next.date;
+    } else {
+      next.date = dateKey;
+    }
+    return next;
+  });
+}
+
+/** Count of tasks per scheduled date, for calendar badges. */
+export function countsByDate(todos: Todo[]): Record<DateKey, number> {
+  return todos.reduce<Record<DateKey, number>>((acc, t) => {
+    if (t.date) {
+      acc[t.date] = (acc[t.date] ?? 0) + 1;
+    }
+    return acc;
+  }, {});
 }
