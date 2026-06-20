@@ -4,7 +4,8 @@ A minimalist, **local-first personal productivity web app**. Started as a Pomodo
 a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Warikoo) prioritization
 & time-audit** app. This file is the source of truth for how to work on it — read it first.
 
-> **More context:** `docs/warikoo-time-management-spec.md` (the prioritization principles + how
+> **More context:** `README.md` (the **cloud layer** — Supabase/GitHub setup, data flow, live
+> project values), `docs/warikoo-time-management-spec.md` (the prioritization principles + how
 > they're implemented) and `docs/roadmap-and-research.md` (current status, the prioritized
 > backlog, and the UX / storage / integration research with sources). Read those before building
 > a related feature.
@@ -68,6 +69,12 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
     API, CORS, deduped to one commit/active day).
   - `supabase/migrations/0001_init.sql` — schema + RLS (the source of truth for the cloud shape).
 
+> **Live instance (provisioned 2026-06-20):** Supabase project ref `jfxbltohhirevwunyipd`
+> (`https://jfxbltohhirevwunyipd.supabase.co`); GitHub OAuth enabled; schema loaded; verified
+> working locally (sign-in + sync). URL + anon key are in `.env.local` (gitignored, public-safe).
+> **Never commit the DB password or the GitHub OAuth client secret** — those live in the
+> dashboard / a password manager only. Full details + setup steps: **`README.md`**.
+
 ## Architecture decisions (locked)
 
 1. TypeScript, strict mode, no `any` without a justifying comment.
@@ -94,10 +101,11 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
 - [x] **Hard deadlines + matrix dashboard** — Things-3-style `deadline` on tasks (separate from
       quadrant & planner date); deadline pills/picker/reminder; `MatrixDashboard` panel.
 - [x] **Notes & reminders** — daily reminder, monthly reminder, freeform custom notes (`NotesPanel`).
-- [x] **Opt-in cloud layer (code complete; needs Supabase provisioning to go live)** — Supabase
-      auth (GitHub/Google), local-first sync, immutable `pomodoro_sessions` ledger, and the GitHub
-      contribution-graph streak commit. Set `NEXT_PUBLIC_SUPABASE_*` (see `.env.example`) + run
-      `supabase/migrations/0001_init.sql` to enable; otherwise the app stays local-only.
+- [x] **Opt-in cloud layer — LIVE (Supabase provisioned, GitHub OAuth verified locally)** —
+      Supabase auth (GitHub; Google not yet set up), local-first sync, immutable
+      `pomodoro_sessions` ledger, and the GitHub contribution-graph streak commit. Gated on
+      `NEXT_PUBLIC_SUPABASE_*` (in `.env.local`); unset ⇒ app stays local-only. See `README.md`.
+      Remaining: Vercel deploy + production redirect URLs.
 
 **Next up (see `docs/roadmap-and-research.md` for the full prioritized backlog):**
 dark mode + design tokens → data safety (JSON export/import) → a persistent "Today" home →
