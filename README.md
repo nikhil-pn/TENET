@@ -55,11 +55,22 @@ Two separate jobs:
 1. **Login** — GitHub is an OAuth provider for Supabase Auth. You click "Sign in with GitHub",
    GitHub redirects to **Supabase** (`/auth/v1/callback`), Supabase creates your session and
    redirects back to the app's `/auth/callback` page.
-2. **The streak** — we request the `repo` scope during login, so Supabase hands back a GitHub
-   **`provider_token`**. The app uses that token to call the GitHub **Contents API** directly from
-   the browser (GitHub's API allows CORS) and append a line to `log/<year>.md` in your `tenet-log`
-   repo. One commit per active day ⇒ one green square. Code: `lib/githubStreak.ts`,
+2. **The streak** — we request the **`public_repo`** scope during login, so Supabase hands back a
+   GitHub **`provider_token`**. The app uses that token to call the GitHub **Contents API** directly
+   from the browser (GitHub's API allows CORS) and append a line to `log/<year>.md` in the user's
+   `tenet-log` repo. One commit per active day ⇒ one green square. Code: `lib/githubStreak.ts`,
    token captured in `lib/cloud/auth.ts`.
+
+   **Scope / privacy:** `public_repo` grants write to **public repos only** — the token can never
+   read or write the user's **private** repos, settings, or orgs. GitHub OAuth Apps cannot scope a
+   token to a single repo; `public_repo` is the narrowest the seamless login flow allows. True
+   single-repo isolation would require a **GitHub App** (user selects the repo) or a user-pasted
+   **fine-grained PAT** — both are bigger UX trade-offs, parked unless needed.
+
+   **Per-user, not the host's account:** each signed-in user's `provider_token` belongs to *their*
+   GitHub account, so `tenet-log` is created on **their** account and commits land on **their** own
+   contribution graph. The app owner's account only owns the OAuth App (the trust broker); it never
+   receives anyone's commits or tokens.
 
 ### What Supabase does
 
@@ -134,7 +145,8 @@ If you ever rebuild the backend, this is the full sequence:
 3. **GitHub OAuth App** (https://github.com/settings/developers → New OAuth App):
    - Homepage: your app URL · Callback: `https://<ref>.supabase.co/auth/v1/callback`
    - Generate a client secret; in Supabase → Auth → Providers → **GitHub**, enable it and paste the
-     Client ID + Secret.
+     Client ID + Secret. (The app requests the `public_repo` scope — public repos only; it never
+     gets access to private repos.)
 4. **Allow-list redirects** — Supabase → Auth → URL Configuration: set **Site URL** and add
    `<your-url>/auth/callback` to **Redirect URLs** (add both localhost and production).
 5. **Env vars** — copy `.env.example` → `.env.local`, fill in `NEXT_PUBLIC_SUPABASE_URL` and

@@ -16,13 +16,22 @@ function redirectTo(): string | undefined {
   return `${window.location.origin}/auth/callback`;
 }
 
-/** Begin GitHub OAuth. `repo` scope lets the streak commit to the log repo. */
+/**
+ * Begin GitHub OAuth. We request `public_repo` (NOT `repo`) so the token can
+ * create and commit to the PUBLIC `tenet-log` streak repo but can NEVER touch
+ * the user's private repos, settings, or orgs. (OAuth Apps can't scope to a
+ * single repo — `public_repo` is the narrowest the login flow allows; true
+ * per-repo access would require a GitHub App or a pasted fine-grained PAT.)
+ */
 export async function signInWithGitHub(): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
   await sb.auth.signInWithOAuth({
     provider: "github",
-    options: { redirectTo: redirectTo(), scopes: "repo read:user user:email" },
+    options: {
+      redirectTo: redirectTo(),
+      scopes: "public_repo read:user user:email",
+    },
   });
 }
 
