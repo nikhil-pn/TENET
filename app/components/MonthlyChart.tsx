@@ -16,6 +16,7 @@ import {
   addTodoForDate,
   todosForDate,
   setTodoDate,
+  setDeadline,
 } from "@/lib/storage";
 import {
   getQuadrant,
@@ -23,6 +24,12 @@ import {
   QUADRANT_META,
   type Quadrant,
 } from "@/lib/prioritization";
+import {
+  deadlinesByDate,
+  deadlineStatusForKey,
+  DEADLINE_META,
+} from "@/lib/deadlines";
+import DeadlinePill from "./DeadlinePill";
 import styles from "./MonthlyChart.module.css";
 
 /** Neutral colour for tasks with at least one Eisenhower axis still unset. */
@@ -177,6 +184,7 @@ const MonthlyChart = ({
   };
 
   const quadCounts = useMemo(() => quadrantCountsByDate(todos), [todos]);
+  const deadlineCounts = useMemo(() => deadlinesByDate(todos), [todos]);
   const selectedTodos = useMemo(
     () => todosForDate(todos, selectedKey),
     [todos, selectedKey]
@@ -294,6 +302,11 @@ const MonthlyChart = ({
               ? tally.q1 + tally.q2 + tally.q3 + tally.q4 + tally.unclassified
               : 0;
             const dotColors = tally ? dayDotColors(tally) : [];
+            const dueCount = deadlineCounts[day.dateKey] ?? 0;
+            const dueColor =
+              dueCount > 0
+                ? DEADLINE_META[deadlineStatusForKey(day.dateKey)].color
+                : undefined;
             const isSelected = day.dateKey === selectedKey;
             return (
               <button
@@ -312,9 +325,19 @@ const MonthlyChart = ({
                 aria-current={day.isToday ? "date" : undefined}
                 aria-label={`${monthNames[currentMonth]} ${day.date}, ${count} task${
                   count === 1 ? "" : "s"
-                }`}
+                }${dueCount > 0 ? `, ${dueCount} due` : ""}`}
               >
                 <div className={styles.dayNumber}>{day.date}</div>
+                {dueCount > 0 && (
+                  <span
+                    className={styles.deadlineMarker}
+                    style={{ color: dueColor }}
+                    title={`${dueCount} deadline${dueCount === 1 ? "" : "s"} due`}
+                    aria-hidden="true"
+                  >
+                    ⚑
+                  </span>
+                )}
                 {dotColors.length > 0 && (
                   <div className={styles.taskDots}>
                     {dotColors.map((color, i) => (
@@ -363,6 +386,15 @@ const MonthlyChart = ({
                       {todo.title}
                     </span>
                   </label>
+                  {!todo.done && (
+                    <DeadlinePill
+                      deadline={todo.deadline}
+                      onChange={(d) =>
+                        setTodos((prev) => setDeadline(prev, todo.id, d))
+                      }
+                      hideWhenEmpty
+                    />
+                  )}
                   <div className={styles.dayActions}>
                     <button
                       className={styles.dayIconBtn}

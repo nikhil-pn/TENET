@@ -1,0 +1,75 @@
+.card {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 220px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  font-family: "Inter", sans-serif;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preset {
+  padding: 5px 9px;
+  font-size: 12px;
+  font-family: "Inter", sans-serif;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f5f5f5;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.preset:hover {
+  background: #eef6ee;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.dateInput {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  color: #333;
+  background: #f8f8f8;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dateInput:focus {
+  border-color: #4caf50;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.12);
+}
+
+.clear {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: "Inter", sans-serif;
+  border-radius: 8px;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  background: #fff;
+  color: #f44336;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clear:hover {
+  background: rgba(244, 67, 54, 0.08);
+}

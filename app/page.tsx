@@ -5,6 +5,8 @@ import ToggleButton from "./components/ToggleButton";
 import MonthlyChart from "./components/MonthlyChart";
 import TodoPanel from "./components/TodoPanel";
 import HabitPanel from "./components/HabitPanel";
+import MatrixDashboard from "./components/MatrixDashboard";
+import DeadlineReminder from "./components/DeadlineReminder";
 import NavDock, { type DockPanel } from "./components/NavDock";
 import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
@@ -108,6 +110,12 @@ export default function Home() {
       />
       <TodoPanel isVisible={activePanel === "tasks"} onClose={closePanel} />
       <HabitPanel isVisible={activePanel === "habits"} onClose={closePanel} />
+      <MatrixDashboard isVisible={activePanel === "matrix"} onClose={closePanel} />
+
+      <DeadlineReminder
+        activePanel={activePanel}
+        onOpenTasks={() => selectPanel("tasks")}
+      />
 
       <div className="flex flex-col items-center justify-center h-full">
         <Clock onTimerUpdate={() => {}} />

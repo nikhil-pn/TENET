@@ -37,6 +37,9 @@ const QUADRANT_AXES: Record<Quadrant, { important: boolean; urgent: boolean }> =
 /** dataTransfer key for drag-to-reclassify. */
 const DRAG_TYPE = "text/plain";
 
+/** Cards shown per quadrant before a "Show more" button (avoids a long column). */
+const VISIBLE_LIMIT = 6;
+
 export default function EisenhowerMatrix({
   todos,
   setTodos,
@@ -46,6 +49,17 @@ export default function EisenhowerMatrix({
   const buckets = todosByQuadrant(todos);
   // Which quadrant section is currently a drag-hover target (for the highlight).
   const [dragOverQuadrant, setDragOverQuadrant] = useState<Quadrant | null>(null);
+  // Quadrants whose full task list is expanded (past VISIBLE_LIMIT).
+  const [expanded, setExpanded] = useState<Set<Quadrant>>(new Set());
+
+  const toggleExpanded = (q: Quadrant): void => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(q)) next.delete(q);
+      else next.add(q);
+      return next;
+    });
+  };
 
   const handleToggle = (id: string): void => {
     setTodos((prev) => toggleTodo(prev, id));
@@ -160,6 +174,8 @@ export default function EisenhowerMatrix({
         {QUADRANT_ORDER.map((q) => {
           const meta = QUADRANT_META[q];
           const items = buckets[q];
+          const isExp = expanded.has(q);
+          const shown = isExp ? items : items.slice(0, VISIBLE_LIMIT);
           const isDragOver = dragOverQuadrant === q;
           return (
             <section
@@ -183,7 +199,20 @@ export default function EisenhowerMatrix({
                 {items.length === 0 ? (
                   <span className={styles.empty}>—</span>
                 ) : (
-                  items.map((t) => renderCard(t, q))
+                  <>
+                    {shown.map((t) => renderCard(t, q))}
+                    {items.length > VISIBLE_LIMIT && (
+                      <button
+                        type="button"
+                        className={styles.showMore}
+                        onClick={() => toggleExpanded(q)}
+                      >
+                        {isExp
+                          ? "Show less"
+                          : `Show ${items.length - VISIBLE_LIMIT} more`}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </section>

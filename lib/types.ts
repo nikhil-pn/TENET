@@ -20,6 +20,12 @@ export interface Todo {
   date?: DateKey;
   /** Reserved for foreground reminders. Unused in the v1 checklist UI. */
   dueAt?: Timestamp;
+  /**
+   * Hard deadline — the local calendar day this task must be done BY
+   * (Things-3 style "Deadline"). Distinct from `date` (the scheduled/planner
+   * day) and `dueAt` (a reserved reminder timestamp). undefined ⇒ no deadline.
+   */
+  deadline?: DateKey;
 
   // ── Eisenhower / time-audit (Warikoo). All optional → back-compatible. ──
   /** Matters to long-term goals. undefined ⇒ unclassified. */

@@ -6,12 +6,27 @@
   gap: 16px;
 }
 
-/* 2×2 grid: top row = Important, left column = Urgent (q1 q2 / q3 q4). */
+/* Mobile: 2×2 square (q1 q2 / q3 q4). Laptop: 4 columns side-by-side. */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
   gap: 12px;
+  align-items: start;
+}
+
+/* Laptop/desktop: lay the four quadrants out horizontally across the width. */
+@media (min-width: 880px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Small phones: stack into a single column. */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .quadrant,
@@ -70,8 +85,6 @@
 
 .quadrantBody {
   flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -83,6 +96,26 @@
   font-size: 20px;
   text-align: center;
   margin: auto;
+}
+
+/* "Show N more" / "Show less" toggle for quadrants past VISIBLE_LIMIT. */
+.showMore {
+  margin-top: 2px;
+  padding: 7px 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  color: #4caf50;
+  background: transparent;
+  border: 1px dashed rgba(76, 175, 80, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.showMore:hover {
+  background: rgba(76, 175, 80, 0.08);
+  border-color: #4caf50;
 }
 
 /* ── Cards ── */
@@ -274,15 +307,10 @@
   gap: 8px;
 }
 
-/* Stack to four vertical sections on small screens. */
-@media (max-width: 640px) {
-  .grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-  }
-
+/* Tighter quadrants when stacked on very small screens. */
+@media (max-width: 480px) {
   .quadrant,
   .quadrantDragOver {
-    min-height: 120px;
+    min-height: 110px;
   }
 }

@@ -11,6 +11,7 @@ function isTodo(value: unknown): value is Todo {
   const t = value as Record<string, unknown>;
   const optBool = (v: unknown) => v === undefined || typeof v === "boolean";
   const optNum = (v: unknown) => v === undefined || typeof v === "number";
+  const optStr = (v: unknown) => v === undefined || typeof v === "string";
   return (
     typeof t.id === "string" &&
     typeof t.title === "string" &&
@@ -23,7 +24,8 @@ function isTodo(value: unknown): value is Todo {
     optBool(t.delegated) &&
     optBool(t.dropped) &&
     optNum(t.pomodoroCount) &&
-    optNum(t.actualMinutes)
+    optNum(t.actualMinutes) &&
+    optStr(t.deadline)
   );
 }
 
@@ -46,6 +48,7 @@ export interface TaskInit {
   important?: boolean;
   urgent?: boolean;
   estimatedMinutes?: number;
+  deadline?: DateKey;
 }
 
 function applyInit(init?: TaskInit): Partial<Todo> {
@@ -54,6 +57,7 @@ function applyInit(init?: TaskInit): Partial<Todo> {
   if (init.important !== undefined) out.important = init.important;
   if (init.urgent !== undefined) out.urgent = init.urgent;
   if (init.estimatedMinutes !== undefined) out.estimatedMinutes = init.estimatedMinutes;
+  if (init.deadline !== undefined) out.deadline = init.deadline;
   return out;
 }
 
@@ -175,6 +179,17 @@ export function setEstimate(todos: Todo[], id: string, minutes: number | undefin
     const next: Todo = { ...t };
     if (minutes === undefined) delete next.estimatedMinutes;
     else next.estimatedMinutes = minutes;
+    return next;
+  });
+}
+
+/** Set or clear the hard deadline (local "YYYY-MM-DD"). */
+export function setDeadline(todos: Todo[], id: string, deadline: DateKey | undefined): Todo[] {
+  return todos.map((t) => {
+    if (t.id !== id) return t;
+    const next: Todo = { ...t };
+    if (deadline === undefined) delete next.deadline;
+    else next.deadline = deadline;
     return next;
   });
 }
