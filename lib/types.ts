@@ -42,6 +42,12 @@ export interface Todo {
   pomodoroCount?: number;
   /** Measured focus minutes from completed Pomodoros (shifts the mix estimated→actual). */
   actualMinutes?: number;
+
+  /**
+   * Epoch-ms of the last local edit, stamped by the cloud-sync layer for
+   * last-write-wins. Optional + back-compatible; absent ⇒ treated as oldest.
+   */
+  updatedAt?: Timestamp;
 }
 
 /** One per calendar day — the end-of-day satisfaction check + 10-day cycle. */
@@ -51,6 +57,8 @@ export interface DayLog {
   satisfactionScore: number;
   satisfactionNote?: string;
   loggedAt: Timestamp;
+  /** Last-write-wins stamp for cloud sync. See `Todo.updatedAt`. */
+  updatedAt?: Timestamp;
 }
 
 export interface Habit {
@@ -70,6 +78,40 @@ export interface Habit {
   targetPerDay?: number;
   /** Reserved — hide without deleting history. */
   archived?: boolean;
+  /** Last-write-wins stamp for cloud sync. See `Todo.updatedAt`. */
+  updatedAt?: Timestamp;
+}
+
+/**
+ * A note or reminder. `kind` distinguishes a day reminder, a monthly reminder,
+ * and a freeform custom note; it's a plain string so future kinds need no
+ * migration. Synced like todos/habits.
+ */
+export interface Note {
+  id: string;
+  /** "daily" → a specific day · "monthly" → a month · "custom" → freeform. */
+  kind: "daily" | "monthly" | "custom";
+  /** For "daily" the day "YYYY-MM-DD"; for "monthly" the month "YYYY-MM". */
+  date?: DateKey;
+  title: string;
+  body: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+/**
+ * One completed focus session — the immutable accountability ledger row.
+ * Written once on Pomodoro completion, never edited (insert-only under RLS).
+ */
+export interface PomodoroSession {
+  id: string;
+  /** The task this session was focused on, if any (Pomodoro↔task link). */
+  taskId?: string;
+  startedAt: Timestamp;
+  endedAt: Timestamp;
+  durationMinutes: number;
+  /** Local calendar day "YYYY-MM-DD" the session counts toward. */
+  date: DateKey;
 }
 
 /**
@@ -82,4 +124,5 @@ export interface TenetData {
   todos: Todo[];
   habits: Habit[];
   dayLogs?: DayLog[];
+  notes?: Note[];
 }

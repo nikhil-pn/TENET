@@ -61,7 +61,31 @@ NN/g (microinteractions, onboarding), Todoist/Things/Linear/Sunsama capture patt
 
 ---
 
-## Research — storage & backup
+## Storage — DECISION (pivot): opt-in Supabase cloud layer
+
+> **Update — the "no hosted DB" conclusion below was deliberately revised.** The app now ships an
+> **opt-in Supabase layer** (auth + cloud sync + GitHub streak), gated on `NEXT_PUBLIC_SUPABASE_*`.
+> Unset ⇒ pure local-first (everything below still describes that default). What changed and why:
+>
+> - **Why pivot:** the user wants multi-device cloud data with GitHub/Google login, and — the
+>   emotional core — a real **GitHub contribution-graph streak**: finish a Pomodoro → auto-commit
+>   to a `tenet-log` repo → the green square lights up that day. That needs accounts + a server-set
+>   timestamp, which a pure pasted-PAT backup can't give.
+> - **Stack:** Supabase (Postgres + built-in GitHub/Google OAuth + Row-Level Security). One managed
+>   service, **no server of ours** — static export preserved; the only client secret is the public
+>   anon key (RLS guards every row). Schema + policies live in `supabase/migrations/0001_init.sql`.
+> - **Sync model:** local-first. The app still reads/writes localStorage instantly (offline-safe);
+>   `lib/cloud/sync.ts` mirrors changes to Supabase via the `subscribeWrites()` seam and merges on
+>   login (per-record last-write-wins via `updatedAt` + a snapshot diff that distinguishes a remote
+>   delete from a local create). Realtime multi-device push is a later enhancement.
+> - **Accountability / immutability:** the tamper-proof record is the `pomodoro_sessions` table —
+>   server timestamp + **insert-only RLS** (no UPDATE/DELETE, even for the owner). The GitHub graph
+>   rides on top as motivation only; **commits can be backdated**, so the DB ledger is truth.
+> - **Explicitly OUT of scope (kept simple):** no Markdown-file data mirror, no Obsidian vault
+>   integration, no in-app AI. Obsidian stays the user's separate "supreme brain"; a future
+>   app↔Obsidian bridge is parked, not built.
+
+## Research — storage & backup (pre-pivot; the local-first default still holds)
 
 - **localStorage is adequate now** (data is kilobytes). Migrate to **IndexedDB** (behind the seam)
   only on binary/large data, jank, a sync engine, or nearing ~5 MiB. The real gap is **durability**:

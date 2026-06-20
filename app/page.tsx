@@ -7,10 +7,14 @@ import TodoPanel from "./components/TodoPanel";
 import HabitPanel from "./components/HabitPanel";
 import MatrixDashboard from "./components/MatrixDashboard";
 import DeadlineReminder from "./components/DeadlineReminder";
+import NotesPanel from "./components/NotesPanel";
+import AuthButton from "./components/AuthButton";
 import NavDock, { type DockPanel } from "./components/NavDock";
 import SplashScreen from "./components/SplashScreen";
 import styles from "./components/Clock.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import type { User } from "@supabase/supabase-js";
+import { startSync, stopSync } from "@/lib/cloud/sync";
 
 // The beforeinstallprompt event is not part of the standard DOM lib types yet,
 // so we declare the minimal shape we rely on here.
@@ -83,6 +87,13 @@ export default function Home() {
   const selectPanel = (panel: DockPanel) =>
     setActivePanel((cur) => (cur === panel ? null : panel));
 
+  // Cloud sync follows auth: pull + watch on login, stop on logout. No-ops
+  // entirely when Supabase isn't configured (local-first default).
+  const handleUserChange = useCallback((user: User | null) => {
+    if (user) void startSync(user.id);
+    else stopSync();
+  }, []);
+
   const installApp = async () => {
     if (!deferredPrompt) return;
 
@@ -111,6 +122,9 @@ export default function Home() {
       <TodoPanel isVisible={activePanel === "tasks"} onClose={closePanel} />
       <HabitPanel isVisible={activePanel === "habits"} onClose={closePanel} />
       <MatrixDashboard isVisible={activePanel === "matrix"} onClose={closePanel} />
+      <NotesPanel isVisible={activePanel === "notes"} onClose={closePanel} />
+
+      <AuthButton onUserChange={handleUserChange} />
 
       <DeadlineReminder
         activePanel={activePanel}

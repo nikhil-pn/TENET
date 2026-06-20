@@ -11,9 +11,17 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
 
 ## What this is (and isn't)
 
-- A **standalone, local-first** web app. **For the web v1: no backend, no network calls, no
-  AI/agent calls in the app, no live Obsidian/vault coupling.** The app stays a dumb, fast
-  frontend that owns its own data.
+- A **standalone, local-first** web app. It always works offline against localStorage and owns
+  its own data. **No AI/agent calls in the app, no live Obsidian/vault coupling.**
+- **Cloud is an opt-in layer (added — pivots the old "no backend" rule).** When the two
+  `NEXT_PUBLIC_SUPABASE_*` env vars are set, the app gains **Supabase auth (GitHub/Google) +
+  cloud sync + a GitHub accountability streak**. Unset ⇒ it behaves exactly like the old
+  local-only app. **Static export is preserved** — the Supabase JS client and OAuth callback run
+  fully client-side; the only client secret is the public anon key (Row-Level Security guards data).
+- **Accountability model:** the immutable record is the Postgres `pomodoro_sessions` table
+  (server timestamp + insert-only RLS — no UPDATE/DELETE, even for the owner). The GitHub
+  contribution graph rides on top as public motivation only — commits can be backdated, so the
+  DB ledger is truth, the green squares are hype.
 - The "intelligence" (any future AI/agent help) lives **outside** the app — in the terminal via
   Claude Code / MCP — never the app calling an AI API.
 - **Future (don't build now, just don't block it):** a native macOS **Electron "pro" edition**
@@ -28,28 +36,44 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
 - **Static export** (`output: "export"` in next.config.js) — keep this; no server.
 - Styling: **CSS Modules** (`*.module.css` next to each component). Match this style.
 - PWA: service worker + manifest (installable). Keep working.
-- Persistence: **localStorage** (see the `lib/` data layer below).
+- Persistence: **localStorage** (see the `lib/` data layer below), with an **opt-in Supabase
+  cloud-sync layer** (`@supabase/supabase-js`) gated on env vars.
 
 ## The `lib/` data layer (portable, framework-agnostic — reuse it)
 
 - `lib/persist.ts` — the **single storage seam**: `readJSON`/`writeJSON` (the ONLY code that
-  touches localStorage), plus `dateToKey()` and `createId()`. **Swapping this for filesystem/IPC
-  is how the Electron edition migrates — don't scatter `localStorage` calls elsewhere.**
-- `lib/types.ts` — `Todo`, `Habit`, `DayLog`, and the versioned `TenetData` snapshot (the
-  export/backup/vault-file shape). New `Todo` fields are optional & back-compatible.
+  touches localStorage), plus `dateToKey()`, `createId()`, and `subscribeWrites()` (the
+  write-through hook the cloud-sync layer uses). **Swapping this for filesystem/IPC is how the
+  Electron edition migrates — don't scatter `localStorage` calls elsewhere.**
+- `lib/types.ts` — `Todo`, `Habit`, `DayLog`, `Note`, `PomodoroSession`, and the versioned
+  `TenetData` snapshot (the export/backup/vault-file shape). New fields are optional &
+  back-compatible; synced records carry an optional `updatedAt` for last-write-wins.
 - `lib/storage.ts` — pure `Todo[]` ops (CRUD, date scheduling, classification, `creditPomodoro`).
+- `lib/notes.ts` — pure `Note[]` CRUD (daily/monthly reminders + freeform custom notes).
+- `lib/deadlines.ts` — pure hard-deadline status/grouping/formatting (Things-3-style `deadline`).
 - `lib/prioritization.ts` — pure Eisenhower logic: `getQuadrant`, `quadrantBreakdown`,
   `taskHints`, `nudges`, `QUADRANT_META` (the quadrant colors), and all tunable thresholds as
   named constants. See `docs/warikoo-time-management-spec.md`.
 - `lib/habits.ts`, `lib/daylog.ts` — habit streaks and the day satisfaction log.
 - `lib/dates.ts` — dependency-free natural-language date parser (`parseWhen`).
 - `lib/session.ts` — which task the current Pomodoro is focused on (Pomodoro↔task link).
+- `lib/pomodoroLog.ts` — the focus-session ledger: append-only local mirror + best-effort
+  insert into the immutable cloud `pomodoro_sessions` table; streak/heatmap readers.
+- **Cloud layer (opt-in, env-gated, all no-op when unconfigured):**
+  - `lib/supabase.ts` — singleton client + `cloudEnabled`. Returns `null` without env vars.
+  - `lib/cloud/auth.ts` — OAuth sign-in/out, auth subscription, GitHub `provider_token` capture.
+  - `lib/cloud/sync.ts` — local-first sync: pull-on-login merge (per-record LWW via `updatedAt`
+    + a snapshot diff) and a debounced write-through push. Hooks in only at `subscribeWrites`.
+  - `lib/githubStreak.ts` — the daily accountability commit to the `tenet-log` repo (Contents
+    API, CORS, deduped to one commit/active day).
+  - `supabase/migrations/0001_init.sql` — schema + RLS (the source of truth for the cloud shape).
 
 ## Architecture decisions (locked)
 
 1. TypeScript, strict mode, no `any` without a justifying comment.
-2. Static export stays — the web app needs no backend.
-3. Persistence funnels through `lib/persist.ts`. Data is portable JSON (`TenetData`).
+2. Static export stays — even the cloud layer is client-side only (no server of ours).
+3. Persistence funnels through `lib/persist.ts`. Data is portable JSON (`TenetData`). The cloud
+   layer attaches ONLY via `subscribeWrites()` — never scatter Supabase calls into domain/UI code.
 4. Core logic stays in plain `lib/` TS modules, UI-agnostic, so the future native shell reuses it.
 5. **Fragile DOM contract — do not break:** `Clock.tsx` starts/stops the timer by reaching the
    `ToggleButton` via `getElementById("main-toggle")` and the selector `#main-toggle ~ .button`,
@@ -66,12 +90,19 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
 - [x] **Eisenhower (Warikoo) prioritization + time-audit** — classify-on-add; Tasks panel tabs
       **List / Matrix / Insights**; tap+drag reclassify; time-mix chart + 75% reference gauge;
       satisfaction slider + 10-day strip; **Pomodoro↔task focus link**. See the spec doc.
-- [x] **Bottom nav dock** (Calendar · Tasks · Habits) — replaced the floating buttons.
+- [x] **Bottom nav dock** (Calendar · Tasks · Habits · Matrix · Notes) — replaced floating buttons.
+- [x] **Hard deadlines + matrix dashboard** — Things-3-style `deadline` on tasks (separate from
+      quadrant & planner date); deadline pills/picker/reminder; `MatrixDashboard` panel.
+- [x] **Notes & reminders** — daily reminder, monthly reminder, freeform custom notes (`NotesPanel`).
+- [x] **Opt-in cloud layer (code complete; needs Supabase provisioning to go live)** — Supabase
+      auth (GitHub/Google), local-first sync, immutable `pomodoro_sessions` ledger, and the GitHub
+      contribution-graph streak commit. Set `NEXT_PUBLIC_SUPABASE_*` (see `.env.example`) + run
+      `supabase/migrations/0001_init.sql` to enable; otherwise the app stays local-only.
 
 **Next up (see `docs/roadmap-and-research.md` for the full prioritized backlog):**
-dark mode + design tokens → data safety (`storage.persist()` + JSON export/import) → a persistent
-"Today" home → swipe gestures + completion delight → settings → opt-in GitHub backup. Reminders
-are foreground-only by design (no backend).
+dark mode + design tokens → data safety (JSON export/import) → a persistent "Today" home →
+swipe gestures + completion delight → settings → realtime multi-device push (Supabase Realtime).
+In-app reminders stay foreground-only by design.
 
 ## Conventions
 

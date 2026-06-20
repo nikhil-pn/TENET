@@ -24,6 +24,31 @@ export function writeJSON<T>(key: string, value: T): void {
   } catch {
     // Quota exceeded or storage blocked — drop silently so the UI never crashes.
   }
+  notifyWrite(key, value);
+}
+
+// ── Write-through subscription (the cloud-sync hook) ─────────────────────────
+// The cloud layer subscribes here to push local changes up. This keeps ALL
+// persistence flowing through this one seam — domain modules and the UI never
+// know the cloud exists. No subscriber ⇒ pure local-first behaviour.
+
+type WriteListener = (key: string, value: unknown) => void;
+const writeListeners = new Set<WriteListener>();
+
+/** Subscribe to every writeJSON. Returns an unsubscribe function. */
+export function subscribeWrites(listener: WriteListener): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+}
+
+function notifyWrite(key: string, value: unknown): void {
+  for (const listener of writeListeners) {
+    try {
+      listener(key, value);
+    } catch {
+      // A misbehaving listener must never break a local save.
+    }
+  }
 }
 
 // ── Portable utilities ───────────────────────────────────────────────────────

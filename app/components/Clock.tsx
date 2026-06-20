@@ -5,6 +5,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { loadTodos, saveTodos, creditPomodoro } from "@/lib/storage";
 import { getActiveSessionTask, clearActiveSessionTask } from "@/lib/session";
+import { logSession } from "@/lib/pomodoroLog";
+import { recordFocusDay } from "@/lib/githubStreak";
 
 interface ClockProps {
   onTimerUpdate?: (status: string) => void;
@@ -268,6 +270,15 @@ export default function Clock({ onTimerUpdate }: ClockProps) {
                 );
                 clearActiveSessionTask();
               }
+
+              // Accountability (both best-effort, fire-and-forget — they never
+              // block or break the timer): record the session in the immutable
+              // ledger, then light up today's GitHub contribution square.
+              logSession({
+                durationMinutes: pomodoroMinutes,
+                taskId: activeTaskId ?? undefined,
+              });
+              void recordFocusDay(`${pomodoroMinutes}m focus`);
 
               // Increment pomodoro count
               setPomodoroCount((prevCount) => prevCount + 1);
