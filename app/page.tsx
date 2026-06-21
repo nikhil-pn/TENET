@@ -4,10 +4,10 @@ import Clock from "./components/Clock";
 import ToggleButton from "./components/ToggleButton";
 import MonthlyChart from "./components/MonthlyChart";
 import TodoPanel from "./components/TodoPanel";
-import HabitPanel from "./components/HabitPanel";
 import MatrixDashboard from "./components/MatrixDashboard";
 import DeadlineReminder from "./components/DeadlineReminder";
-import NotesPanel from "./components/NotesPanel";
+import StickyNotes from "./components/StickyNotes";
+import HabitTracker from "./components/HabitTracker";
 import AuthButton from "./components/AuthButton";
 import NavDock, { type DockPanel } from "./components/NavDock";
 import SplashScreen from "./components/SplashScreen";
@@ -120,11 +120,11 @@ export default function Home() {
         onInstall={installApp}
       />
       <TodoPanel isVisible={activePanel === "tasks"} onClose={closePanel} />
-      <HabitPanel isVisible={activePanel === "habits"} onClose={closePanel} />
       <MatrixDashboard isVisible={activePanel === "matrix"} onClose={closePanel} />
-      <NotesPanel isVisible={activePanel === "notes"} onClose={closePanel} />
 
       <AuthButton onUserChange={handleUserChange} />
+      <StickyNotes />
+      <HabitTracker />
 
       <DeadlineReminder
         activePanel={activePanel}

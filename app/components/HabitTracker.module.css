@@ -1,0 +1,204 @@
+.tracker {
+  position: fixed;
+  top: 64px;
+  left: 18px;
+  z-index: 40;
+  width: 220px;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  overflow-x: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 8px 8px;
+  /* Don't block clicks on the empty column; the cards opt back in. */
+  pointer-events: none;
+  scrollbar-width: none;
+}
+
+.tracker::-webkit-scrollbar {
+  display: none;
+}
+
+.card,
+.cardDone {
+  pointer-events: auto;
+  position: relative;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 3px solid #e3e3e3;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-family: "Inter", sans-serif;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.2) both;
+}
+
+.cardDone {
+  border-left-color: #4caf50;
+  background: linear-gradient(180deg, #f6fbf4 0%, #ffffff 60%);
+}
+
+.card:hover,
+.cardDone:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.07);
+  z-index: 1;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Today's check toggle — a circular tap target */
+.check,
+.checkDone {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+  padding: 0;
+}
+
+.check {
+  background: #fff;
+  border: 2px solid #d8d8d8;
+  color: transparent;
+}
+
+.check:hover {
+  border-color: #4caf50;
+}
+
+.checkDone {
+  background: #4caf50;
+  border: 2px solid #4caf50;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(76, 175, 80, 0.35);
+}
+
+.checkDone:active {
+  transform: scale(0.9);
+}
+
+.name {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #333;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-left: 36px;
+}
+
+.strip {
+  display: flex;
+  gap: 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ececec;
+}
+
+.dotDone {
+  background: #71a600;
+}
+
+.dotToday {
+  outline: 2px solid rgba(0, 0, 0, 0.16);
+  outline-offset: 1px;
+}
+
+.streak {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #555;
+}
+
+.streakZero {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: #bbb;
+}
+
+.delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.2);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.card:hover .delete,
+.cardDone:hover .delete {
+  opacity: 1;
+}
+
+.delete:hover {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-18px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cardDone {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .tracker {
+    top: 58px;
+    left: 8px;
+    width: 158px;
+    gap: 10px;
+  }
+  .name {
+    font-size: 13px;
+  }
+  .metaRow {
+    padding-left: 0;
+  }
+}

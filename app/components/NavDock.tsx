@@ -2,7 +2,7 @@
 import React from "react";
 import styles from "./NavDock.module.css";
 
-export type DockPanel = "calendar" | "tasks" | "habits" | "matrix" | "notes";
+export type DockPanel = "calendar" | "tasks" | "matrix";
 
 interface NavDockProps {
   active: DockPanel | null;
@@ -48,21 +48,6 @@ const ICONS: Record<DockPanel, React.ReactNode> = {
       <line x1="10" y1="18" x2="20.5" y2="18" />
     </svg>
   ),
-  habits: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-    </svg>
-  ),
   matrix: (
     <svg
       width="22"
@@ -81,34 +66,15 @@ const ICONS: Record<DockPanel, React.ReactNode> = {
       <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
     </svg>
   ),
-  notes: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 4h16v12l-4 4H4z" />
-      <path d="M14 20v-4h4" />
-      <path d="M8 9h8M8 13h5" />
-    </svg>
-  ),
 };
 
 const LABELS: Record<DockPanel, string> = {
   calendar: "Calendar",
   tasks: "Tasks",
-  habits: "Habits",
   matrix: "Matrix",
-  notes: "Notes",
 };
 
-const ORDER: DockPanel[] = ["calendar", "tasks", "habits", "matrix", "notes"];
+const ORDER: DockPanel[] = ["calendar", "tasks", "matrix"];
 
 const NavDock = ({ active, onSelect }: NavDockProps) => {
   return (
