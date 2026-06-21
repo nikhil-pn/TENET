@@ -51,6 +51,13 @@ export function deleteHabit(habits: Habit[], id: string): Habit[] {
   return habits.filter((h) => h.id !== id);
 }
 
+/** Rename a habit. Empty/whitespace names are ignored (keeps the old name). */
+export function renameHabit(habits: Habit[], id: string, name: string): Habit[] {
+  const trimmed = name.trim();
+  if (trimmed === "") return habits;
+  return habits.map((h) => (h.id === id ? { ...h, name: trimmed } : h));
+}
+
 /** Whether the habit met its target on the given day. */
 export function isDoneOn(habit: Habit, dateKey: DateKey): boolean {
   const amount = habit.checkins[dateKey] ?? 0;

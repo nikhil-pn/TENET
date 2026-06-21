@@ -48,9 +48,15 @@ const HabitTracker = () => {
     saveHabits(deleteHabit(loadHabits(), id));
   };
 
-  if (habits.length === 0) return null;
+  // Once a habit is checked off for the day it drops off the home screen — a
+  // recurring daily task you've already done shouldn't keep taking up space.
+  // The check-in still lives in storage (streak intact); when the local day
+  // rolls to a new `dateToKey()` it's "not done" again and reappears.
+  const sorted = [...habits]
+    .filter((habit) => !isDoneOn(habit, todayKey))
+    .sort((a, b) => a.order - b.order);
 
-  const sorted = [...habits].sort((a, b) => a.order - b.order);
+  if (sorted.length === 0) return null;
 
   return (
     <div className={styles.tracker} aria-label="Habit tracker">

@@ -1,9 +1,17 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import type { DateKey, Todo } from "@/lib/types";
+import type { DateKey, Habit, Todo } from "@/lib/types";
+import { subscribeWrites } from "@/lib/persist";
 import { loadTodos, saveTodos, addTodo } from "@/lib/storage";
 import { addNote, loadNotes, saveNotes } from "@/lib/notes";
-import { addHabit, loadHabits, saveHabits } from "@/lib/habits";
+import {
+  addHabit,
+  loadHabits,
+  saveHabits,
+  deleteHabit,
+  renameHabit,
+  currentStreak,
+} from "@/lib/habits";
 import {
   getQuadrant,
   QUADRANT_META,
@@ -56,6 +64,10 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
   // Habit composer — adds a habit card to the home screen (HabitTracker).
   const [habitDraft, setHabitDraft] = useState<string>("");
   const [justAddedHabit, setJustAddedHabit] = useState<boolean>(false);
+  // The created habits, listed under the input for review / edit / delete.
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [habitEditDraft, setHabitEditDraft] = useState<string>("");
 
   const taskInputRef = useRef<HTMLInputElement | null>(null);
   const noteInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -67,10 +79,24 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
   useEffect(() => {
     if (isVisible) {
       setTodos(loadTodos());
+      setHabits(loadHabits());
+      setEditingHabitId(null);
       setHydrated(true);
       setShowDeadlinePicker(false);
       setMode("task");
     }
+  }, [isVisible]);
+
+  // Keep the habit list in sync while open — a check-off on the home screen
+  // (or a cloud pull) writes the habits key; re-read so streaks stay current.
+  useEffect(() => {
+    if (!isVisible) return;
+    const unsub = subscribeWrites((key) => {
+      if (typeof key === "string" && key.includes("habits")) {
+        setHabits(loadHabits());
+      }
+    });
+    return unsub;
   }, [isVisible]);
 
   // Persist after the initial load so the empty starting state can't clobber storage.
@@ -152,7 +178,9 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
   const handleAddHabit = () => {
     const text = habitDraft.trim();
     if (text === "") return;
-    saveHabits(addHabit(loadHabits(), text));
+    const next = addHabit(loadHabits(), text);
+    saveHabits(next);
+    setHabits(next);
     setHabitDraft("");
     setJustAddedHabit(true);
     window.setTimeout(() => setJustAddedHabit(false), 1600);
@@ -162,6 +190,42 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddHabit();
+    }
+  };
+
+  const handleDeleteHabit = (id: string) => {
+    const next = deleteHabit(loadHabits(), id);
+    saveHabits(next);
+    setHabits(next);
+    if (editingHabitId === id) setEditingHabitId(null);
+  };
+
+  const startEditHabit = (habit: Habit) => {
+    setEditingHabitId(habit.id);
+    setHabitEditDraft(habit.name);
+  };
+
+  const commitEditHabit = () => {
+    if (editingHabitId === null) return;
+    const next = renameHabit(loadHabits(), editingHabitId, habitEditDraft);
+    saveHabits(next);
+    setHabits(next);
+    setEditingHabitId(null);
+    setHabitEditDraft("");
+  };
+
+  const cancelEditHabit = () => {
+    setEditingHabitId(null);
+    setHabitEditDraft("");
+  };
+
+  const handleHabitEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitEditHabit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEditHabit();
     }
   };
 
@@ -399,6 +463,58 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
             <p className={styles.habitNote}>
               Check it off each day on your home screen to build the streak.
             </p>
+
+            {habits.length > 0 && (
+              <ul className={styles.habitList} aria-label="Your habits">
+                {[...habits]
+                  .sort((a, b) => a.order - b.order)
+                  .map((habit) => (
+                    <li key={habit.id} className={styles.habitRow}>
+                      {editingHabitId === habit.id ? (
+                        <input
+                          className={styles.habitEditInput}
+                          type="text"
+                          value={habitEditDraft}
+                          autoFocus
+                          onChange={(e) => setHabitEditDraft(e.target.value)}
+                          onKeyDown={handleHabitEditKeyDown}
+                          onBlur={commitEditHabit}
+                          aria-label={`Edit habit "${habit.name}"`}
+                        />
+                      ) : (
+                        <>
+                          <span className={styles.habitRowName}>
+                            {habit.emoji ? `${habit.emoji} ` : ""}
+                            {habit.name}
+                          </span>
+                          <span
+                            className={styles.habitRowStreak}
+                            title="Current streak"
+                          >
+                            🔥 {currentStreak(habit)}
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.habitRowEdit}
+                            onClick={() => startEditHabit(habit)}
+                            aria-label={`Edit habit "${habit.name}"`}
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.habitRowDelete}
+                            onClick={() => handleDeleteHabit(habit.id)}
+                            aria-label={`Delete habit "${habit.name}"`}
+                          >
+                            ×
+                          </button>
+                        </>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         )}
       </div>
