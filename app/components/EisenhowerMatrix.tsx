@@ -89,7 +89,6 @@ export default function EisenhowerMatrix({
       <div
         key={t.id}
         className={styles.card}
-        style={q ? { borderLeftColor: QUADRANT_META[q].color } : undefined}
         draggable
         onDragStart={(e) => handleDragStart(e, t.id)}
       >
@@ -109,26 +108,18 @@ export default function EisenhowerMatrix({
             {(q === "q1" || q === "q2") && onStartFocus && !t.done && (
               <button
                 type="button"
+                className={styles.focusBtn}
                 onClick={() => onStartFocus(t)}
                 title="Start a focus session"
-                style={{
-                  border: "none",
-                  background: "#4caf50",
-                  color: "#fff",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "3px 9px",
-                  borderRadius: "999px",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
+                aria-label="Start a focus session"
               >
-                ▶ Focus
+                ▶
               </button>
             )}
             {pomodoros > 0 && (
               <span className={styles.estimate} title={`${t.estimatedMinutes} min`}>
-                🍅 {pomodoros}
+                <span className={styles.estimateIcon}>🍅</span>
+                {pomodoros}
               </span>
             )}
           </div>
@@ -159,6 +150,7 @@ export default function EisenhowerMatrix({
             <section
               key={q}
               className={isDragOver ? styles.quadrantDragOver : styles.quadrant}
+              style={{ borderTopColor: meta.color }}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (dragOverQuadrant !== q) setDragOverQuadrant(q);
@@ -166,8 +158,11 @@ export default function EisenhowerMatrix({
               onDragLeave={() => setDragOverQuadrant((cur) => (cur === q ? null : cur))}
               onDrop={(e) => handleDrop(e, q)}
             >
-              <header className={styles.quadrantHeader} style={{ background: meta.color }}>
-                <span className={styles.quadrantName}>{meta.name}</span>
+              <header className={styles.quadrantHeader}>
+                <span className={styles.quadrantName}>
+                  <span className={styles.quadrantDot} style={{ background: meta.color }} />
+                  {meta.name}
+                </span>
                 <span className={styles.quadrantMeta}>
                   <span className={styles.quadrantAction}>{meta.action}</span>
                   <span className={styles.quadrantPct}>{breakdown[q]}%</span>

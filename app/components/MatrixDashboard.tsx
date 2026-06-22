@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 import type { Todo } from "@/lib/types";
 import { loadTodos, saveTodos } from "@/lib/storage";
 import { setActiveSessionTask } from "@/lib/session";
+import {
+  REFERENCE_IMPORTANT_SHARE,
+  nudges,
+  quadrantBreakdown,
+} from "@/lib/prioritization";
 import EisenhowerMatrix from "./EisenhowerMatrix";
 import styles from "./MatrixDashboard.module.css";
 
@@ -57,6 +62,17 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
 
   if (!isVisible) return null;
 
+  // Live focus-health summary for the header strip (the "where to focus" tip).
+  const breakdown = quadrantBreakdown(todos);
+  const hasData = breakdown.classifiedCount > 0;
+  const onTrack = breakdown.importantSharePct >= REFERENCE_IMPORTANT_SHARE;
+  const topTip = nudges(breakdown)[0];
+  const focusMessage = topTip
+    ? topTip.message
+    : onTrack
+      ? "Great balance — most of your effort is on important work."
+      : "Solid start. Protect a block for important, not-urgent work.";
+
   return (
     <div
       className={styles.overlay}
@@ -69,9 +85,44 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
         aria-label="Priority matrix"
       >
         <header className={styles.header}>
-          <div className={styles.titleBlock}>
-            <h2 className={styles.title}>Matrix</h2>
-          </div>
+          <h2 className={styles.title}>Matrix</h2>
+
+          {hasData ? (
+            <div className={styles.statusBar}>
+              <div className={styles.meterBlock}>
+                <div className={styles.meterTop}>
+                  <span className={styles.meterLabel}>Important work</span>
+                  <span className={styles.meterValue}>
+                    <span className={onTrack ? styles.meterNowOn : styles.meterNow}>
+                      {breakdown.importantSharePct}%
+                    </span>
+                    <span className={styles.meterRef}> / {REFERENCE_IMPORTANT_SHARE}%</span>
+                  </span>
+                </div>
+                <div className={styles.meterTrack}>
+                  <div
+                    className={onTrack ? styles.meterFillOn : styles.meterFill}
+                    style={{ width: `${breakdown.importantSharePct}%` }}
+                  />
+                  <div
+                    className={styles.meterMarker}
+                    style={{ left: `${REFERENCE_IMPORTANT_SHARE}%` }}
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+              <p className={styles.tip}>
+                <span className={styles.tipDot} aria-hidden="true" />
+                <span className={styles.tipText}>{focusMessage}</span>
+              </p>
+            </div>
+          ) : (
+            <div className={styles.statusBar}>
+              <p className={styles.tipText}>
+                Classify a few tasks to see your focus mix and tips.
+              </p>
+            </div>
+          )}
         </header>
 
         <div className={styles.scroll}>

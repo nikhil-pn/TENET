@@ -15,9 +15,9 @@
 }
 
 .container {
-  width: 96%;
-  max-width: 900px;
-  max-height: 90vh;
+  width: 97%;
+  max-width: 1180px;
+  max-height: 94vh;
   display: flex;
   flex-direction: column;
   background: #f4f5f7;
@@ -31,31 +31,156 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(14px, 3vw, 26px);
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  padding: 14px clamp(16px, 3vw, 28px);
+  padding: 12px clamp(16px, 3vw, 28px);
 }
 
-.titleBlock {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  min-width: 0;
-}
-
+/* Quiet gray heading — sits on the same line as the focus strip, not competing. */
 .title {
-  font-size: 22px;
+  flex-shrink: 0;
+  font-size: 20px;
   font-weight: 600;
+  color: #8a8a8a;
   margin: 0;
 }
 
-.subtitle {
-  font-size: 14px;
-  color: #999;
-  white-space: nowrap;
+/* ── Focus-health strip: the in-header infographic + "where to focus" tip ── */
+.statusBar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 3vw, 28px);
+  background: #f5f6f8;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 9px 14px;
+}
+
+.meterBlock {
+  flex: 0 0 auto;
+  width: clamp(170px, 34%, 280px);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.meterTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meterLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+}
+
+.meterValue {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meterNow {
+  color: #555;
+}
+
+.meterNowOn {
+  color: #558b2f;
+}
+
+.meterRef {
+  color: #b8b8b8;
+  font-weight: 500;
+}
+
+/* Slim meter with a 75% reference tick (not overflow:hidden so the tick shows). */
+.meterTrack {
+  position: relative;
+  height: 6px;
+  background: #e6e7ea;
+  border-radius: 999px;
+}
+
+.meterFill,
+.meterFillOn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  min-width: 4px;
+  border-radius: 999px;
+}
+
+.meterFill {
+  background: #c2c5cb;
+}
+
+.meterFillOn {
+  background: #7cb342;
+}
+
+.meterMarker {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.tip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* Neutral gray indicator in place of the old colored bulb emoji. */
+.tipDot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #bdbdbd;
+}
+
+.tipText {
+  font-size: 13px;
+  line-height: 1.35;
+  color: #666;
+}
+
+@media (max-width: 760px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .statusBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .meterBlock {
+    width: 100%;
+  }
 }
 
 .scroll {
@@ -63,7 +188,7 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 20px clamp(16px, 3vw, 28px) 28px;
+  padding: 28px clamp(20px, 3vw, 36px) 36px;
   display: flex;
   flex-direction: column;
   gap: 24px;

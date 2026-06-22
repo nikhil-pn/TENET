@@ -6,21 +6,26 @@
   gap: 16px;
 }
 
-/* Always a 2×2 square (q1 q2 / q3 q4), centered and capped so it doesn't
-   stretch flat across a wide screen. */
+/* Mobile: 2×2 square (q1 q2 / q3 q4). Laptop: 4 columns side-by-side. */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: stretch;
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
+  align-items: start;
 }
 
+/* Laptop/desktop: lay the four quadrants out horizontally across the width. */
 @media (min-width: 880px) {
   .grid {
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
+  }
+}
+
+/* Small phones: stack into a single column. */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -30,17 +35,18 @@
   flex-direction: column;
   min-height: 160px;
   background: #fff;
-  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-top: 3px solid #d8d8d8;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
 /* Subtle drop-hover affordance for drag-to-reclassify. */
 .quadrantDragOver {
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.4),
-    0 6px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
 
@@ -49,14 +55,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
-  color: #fff;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .quadrantName {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
+  color: #444;
+}
+
+.quadrantDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .quadrantMeta {
@@ -64,18 +81,19 @@
   flex-direction: column;
   align-items: flex-end;
   flex-shrink: 0;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .quadrantAction {
   font-size: 11px;
   font-weight: 400;
-  opacity: 0.9;
+  color: #aaa;
 }
 
 .quadrantPct {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  color: #555;
 }
 
 .quadrantBody {
@@ -116,15 +134,13 @@
 /* ── Cards ── */
 .card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding: 8px;
-  background: #f8f8f8;
+  background: #fafafa;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #d8d8d8;
   border-radius: 8px;
   cursor: grab;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .card:active {
@@ -209,14 +225,54 @@
   display: none;
 }
 
+/* Small subtle play button — "start a focus session". Soft green tint, no
+   bright fill, so it doesn't flash out against the neutral card. */
+.focusBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  font-size: 9px;
+  line-height: 1;
+  padding: 0 0 0 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.focusBtn:hover {
+  background: rgba(76, 175, 80, 0.18);
+  border-color: rgba(76, 175, 80, 0.55);
+}
+
+.focusBtn:active {
+  transform: scale(0.92);
+}
+
 .estimate {
-  font-size: 12px;
-  color: #777;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #999;
+  background: #f2f2f2;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 999px;
-  padding: 2px 7px;
+  padding: 1px 7px 1px 5px;
   white-space: nowrap;
+}
+
+/* Desaturate the tomato emoji so it reads as a quiet gray glyph, not a
+   bright red dot competing with the content. */
+.estimateIcon {
+  font-size: 10px;
+  filter: grayscale(100%);
+  opacity: 0.55;
 }
 
 /* Imp / Urg pill toggles */
