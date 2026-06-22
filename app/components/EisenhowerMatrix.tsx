@@ -69,10 +69,6 @@ export default function EisenhowerMatrix({
     setTodos((prev) => deleteTodo(prev, id));
   };
 
-  const handleFlag = (id: string, flags: { important?: boolean; urgent?: boolean }): void => {
-    setTodos((prev) => setTodoFlags(prev, id, flags));
-  };
-
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: string): void => {
     e.dataTransfer.setData(DRAG_TYPE, id);
     e.dataTransfer.effectAllowed = "move";
@@ -135,24 +131,6 @@ export default function EisenhowerMatrix({
                 🍅 {pomodoros}
               </span>
             )}
-            <button
-              type="button"
-              className={t.important ? styles.pillOn : styles.pill}
-              onClick={() => handleFlag(t.id, { important: !t.important })}
-              aria-pressed={t.important === true}
-              title="Toggle important"
-            >
-              Imp
-            </button>
-            <button
-              type="button"
-              className={t.urgent ? styles.pillOn : styles.pill}
-              onClick={() => handleFlag(t.id, { urgent: !t.urgent })}
-              aria-pressed={t.urgent === true}
-              title="Toggle urgent"
-            >
-              Urg
-            </button>
           </div>
         </div>
 

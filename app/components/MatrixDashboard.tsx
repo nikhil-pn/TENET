@@ -4,8 +4,6 @@ import type { Todo } from "@/lib/types";
 import { loadTodos, saveTodos } from "@/lib/storage";
 import { setActiveSessionTask } from "@/lib/session";
 import EisenhowerMatrix from "./EisenhowerMatrix";
-import Insights from "./Insights";
-import Reflect from "./Reflect";
 import styles from "./MatrixDashboard.module.css";
 
 interface MatrixDashboardProps {
@@ -59,12 +57,6 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
 
   if (!isVisible) return null;
 
-  const dateLabel = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
-
   return (
     <div
       className={styles.overlay}
@@ -79,7 +71,6 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
         <header className={styles.header}>
           <div className={styles.titleBlock}>
             <h2 className={styles.title}>Matrix</h2>
-            <span className={styles.subtitle}>{dateLabel}</span>
           </div>
         </header>
 
@@ -89,17 +80,6 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
             setTodos={setTodos}
             onStartFocus={handleStartFocus}
           />
-
-          <section className={styles.insightsSection}>
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Time mix</h3>
-              <Insights todos={todos} />
-            </div>
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Reflection</h3>
-              <Reflect />
-            </div>
-          </section>
         </div>
       </div>
     </div>

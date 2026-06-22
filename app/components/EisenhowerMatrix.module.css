@@ -6,26 +6,21 @@
   gap: 16px;
 }
 
-/* Mobile: 2×2 square (q1 q2 / q3 q4). Laptop: 4 columns side-by-side. */
+/* Always a 2×2 square (q1 q2 / q3 q4), centered and capped so it doesn't
+   stretch flat across a wide screen. */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-/* Laptop/desktop: lay the four quadrants out horizontally across the width. */
 @media (min-width: 880px) {
   .grid {
-    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-  }
-}
-
-/* Small phones: stack into a single column. */
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -184,23 +179,34 @@
 .title {
   font-size: 14px;
   color: #333;
-  word-break: break-word;
   line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .titleDone {
   font-size: 14px;
   color: #999;
   text-decoration: line-through;
-  word-break: break-word;
   line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cardControls {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.cardControls:empty {
+  display: none;
 }
 
 .estimate {
