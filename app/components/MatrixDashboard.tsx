@@ -66,25 +66,24 @@ const MatrixDashboard = ({ isVisible, onClose }: MatrixDashboardProps) => {
   });
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Priority matrix">
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
+    <div
+      className={styles.overlay}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className={styles.container}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Priority matrix"
+      >
+        <header className={styles.header}>
           <div className={styles.titleBlock}>
             <h2 className={styles.title}>Matrix</h2>
             <span className={styles.subtitle}>{dateLabel}</span>
           </div>
-          <button
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close matrix"
-          >
-            ×
-          </button>
-        </div>
-      </header>
+        </header>
 
-      <div className={styles.scroll}>
-        <div className={styles.inner}>
+        <div className={styles.scroll}>
           <EisenhowerMatrix
             todos={todos}
             setTodos={setTodos}

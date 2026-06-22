@@ -259,14 +259,6 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
         aria-modal="true"
         aria-label="Create"
       >
-        <button
-          className={styles.closeButton}
-          onClick={onClose}
-          aria-label="Close"
-        >
-          ×
-        </button>
-
         <div className={styles.header}>
           <h2 className={styles.title}>Create</h2>
           <span className={styles.subtitle}>{todayLabel}</span>

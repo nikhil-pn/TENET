@@ -247,14 +247,6 @@ const MonthlyChart = ({
         aria-modal="true"
         aria-label="Calendar"
       >
-        <button
-          className={styles.closeButton}
-          onClick={onClose}
-          aria-label="Close calendar"
-        >
-          ×
-        </button>
-
         <div className={styles.chartHeader}>
           <div className={styles.monthYearDisplay}>
             {monthNames[currentMonth]} {currentYear}
@@ -359,13 +351,6 @@ const MonthlyChart = ({
           >
             <div className={styles.eventPopHeader}>
               <span className={styles.eventPopDate}>{formatKey(editorKey)}</span>
-              <button
-                className={styles.eventPopClose}
-                onClick={closeEditor}
-                aria-label="Close"
-              >
-                ×
-              </button>
             </div>
 
             {dayEvents.length > 0 && (
