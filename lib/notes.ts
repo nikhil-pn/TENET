@@ -13,7 +13,10 @@ function isNote(value: unknown): value is Note {
   const n = value as Record<string, unknown>;
   return (
     typeof n.id === "string" &&
-    (n.kind === "daily" || n.kind === "monthly" || n.kind === "custom") &&
+    (n.kind === "daily" ||
+      n.kind === "monthly" ||
+      n.kind === "custom" ||
+      n.kind === "event") &&
     typeof n.title === "string" &&
     typeof n.body === "string" &&
     typeof n.createdAt === "number"
@@ -72,6 +75,25 @@ export function customNotes(notes: Note[]): Note[] {
 /** The reminder for a specific day, if any. */
 export function dailyNote(notes: Note[], date: DateKey): Note | undefined {
   return notes.find((n) => n.kind === "daily" && n.date === date);
+}
+
+/** Calendar events pinned to a day "YYYY-MM-DD", oldest first. */
+export function eventsForDate(notes: Note[], date: DateKey): Note[] {
+  return notes
+    .filter((n) => n.kind === "event" && n.date === date)
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+/** All calendar events grouped by their day key, each list oldest first. */
+export function eventsByDate(notes: Note[]): Record<DateKey, Note[]> {
+  const map: Record<DateKey, Note[]> = {};
+  for (const n of notes) {
+    if (n.kind === "event" && n.date) (map[n.date] ??= []).push(n);
+  }
+  for (const key of Object.keys(map)) {
+    map[key].sort((a, b) => a.createdAt - b.createdAt);
+  }
+  return map;
 }
 
 /** The reminder for a specific month ("YYYY-MM"), if any. */

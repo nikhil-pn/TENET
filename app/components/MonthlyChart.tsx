@@ -1,58 +1,29 @@
 "use client";
-// Calendar + day planner (opened from the "i" button). Each day shows focus
-// minutes and planned-task indicators; click a day to see/add its tasks; the
-// quick-add field accepts natural language ("next monday gym"). Also keeps the
-// session/total productivity display. (Evolved from the monthly chart.)
+// Calendar (opened from the dock's Calendar button). Each day shows its focus
+// minutes; double-click a day to open a little popover (Google-Calendar style)
+// and add/edit/delete events & reminders pinned to that date. Events surface as
+// small chips on the day. Also keeps the session/total productivity display.
 import { useState, useEffect, useMemo } from "react";
-import type { Todo } from "@/lib/types";
+import type { Note } from "@/lib/types";
 import { dateToKey } from "@/lib/persist";
-import { buildMonthMatrix, type MonthCell } from "@/lib/calendar";
-import { parseWhen } from "@/lib/dates";
+import { subscribeWrites } from "@/lib/persist";
+import { buildMonthMatrix } from "@/lib/calendar";
 import {
-  loadTodos,
-  saveTodos,
-  toggleTodo,
-  deleteTodo,
-  addTodoForDate,
-  todosForDate,
-  setTodoDate,
-  setDeadline,
-} from "@/lib/storage";
-import {
-  getQuadrant,
-  quadrantCountsByDate,
-  QUADRANT_META,
-  type Quadrant,
-} from "@/lib/prioritization";
-import {
-  deadlinesByDate,
-  deadlineStatusForKey,
-  DEADLINE_META,
-} from "@/lib/deadlines";
-import DeadlinePill from "./DeadlinePill";
+  loadNotes,
+  saveNotes,
+  addNote,
+  updateNote,
+  deleteNote,
+  eventsForDate,
+  eventsByDate,
+} from "@/lib/notes";
 import styles from "./MonthlyChart.module.css";
 
-/** Neutral colour for tasks with at least one Eisenhower axis still unset. */
-const UNCLASSIFIED_COLOR = "#9e9e9e";
-
-/** Up to 3 dot colours for a day cell, ordered q1 → q2 → q3 → q4 → unclassified. */
-function dayDotColors(tally: {
-  q1: number;
-  q2: number;
-  q3: number;
-  q4: number;
-  unclassified: number;
-}): string[] {
-  const dots: string[] = [];
-  const order: Quadrant[] = ["q1", "q2", "q3", "q4"];
-  for (const q of order) {
-    for (let i = 0; i < tally[q]; i++) dots.push(QUADRANT_META[q].color);
-  }
-  for (let i = 0; i < tally.unclassified; i++) dots.push(UNCLASSIFIED_COLOR);
-  return dots.slice(0, 3);
-}
-
-interface DayData extends MonthCell {
+interface DayData {
+  date: number;
+  dateKey: string;
+  isCurrentMonth: boolean;
+  isToday: boolean;
   minutes: number;
 }
 
@@ -92,6 +63,10 @@ function formatKey(key: string): string {
   });
 }
 
+// Popover footprint (approx) used to keep it on-screen.
+const POP_W = 300;
+const POP_H = 300;
+
 const MonthlyChart = ({
   isVisible,
   onClose,
@@ -102,15 +77,19 @@ const MonthlyChart = ({
   const [monthData, setMonthData] = useState<DayData[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentTimerInfo, setCurrentTimerInfo] = useState("00:00 / 25:00");
   const [totalProductivityMinutes, setTotalProductivityMinutes] = useState(0);
 
-  // Planner state
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-  const [selectedKey, setSelectedKey] = useState<string>(dateToKey());
-  const [quick, setQuick] = useState("");
-  const [dayDraft, setDayDraft] = useState("");
+  // Events (stored as "event" notes). The calendar reads/writes these.
+  const [notes, setNotes] = useState<Note[]>([]);
+
+  // Event editor popover state.
+  const [editorKey, setEditorKey] = useState<string | null>(null);
+  const [editorPos, setEditorPos] = useState<{ top: number; left: number } | null>(
+    null
+  );
+  const [evTitle, setEvTitle] = useState("");
+  const [evBody, setEvBody] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   // Build the month grid + read per-day minutes and the all-time total.
   useEffect(() => {
@@ -122,41 +101,35 @@ const MonthlyChart = ({
           const saved = localStorage.getItem(`productiveTime_${cell.dateKey}`);
           if (saved) minutes = parseInt(saved, 10);
         }
-        return { ...cell, minutes };
+        return {
+          date: cell.date,
+          dateKey: cell.dateKey,
+          isCurrentMonth: cell.isCurrentMonth,
+          isToday: cell.isToday,
+          minutes,
+        };
       });
       setMonthData(enriched);
 
-      const currentTime = localStorage.getItem("currentTimerInfo");
-      if (currentTime) setCurrentTimerInfo(currentTime);
       const productiveTime = localStorage.getItem("productiveTime");
       if (productiveTime) setTotalProductivityMinutes(parseInt(productiveTime, 10));
     }
   }, [currentMonth, currentYear, isVisible]);
 
-  // Real-time session info while open.
+  // Load events when the panel opens, and keep in sync with external writes.
   useEffect(() => {
     if (!isVisible) return;
-    const timerInterval = setInterval(() => {
-      if (typeof window !== "undefined") {
-        const currentTime = localStorage.getItem("currentTimerInfo");
-        if (currentTime) setCurrentTimerInfo(currentTime);
-      }
-    }, 1000);
-    return () => clearInterval(timerInterval);
+    setNotes(loadNotes());
+    const unsub = subscribeWrites((key) => {
+      if (typeof key === "string" && key.includes("notes")) setNotes(loadNotes());
+    });
+    return unsub;
   }, [isVisible]);
 
-  // Load todos when the panel opens (picks up edits made in the checklist).
+  // Close the editor whenever the panel itself closes.
   useEffect(() => {
-    if (isVisible) {
-      setTodos(loadTodos());
-      setHydrated(true);
-    }
+    if (!isVisible) closeEditor();
   }, [isVisible]);
-
-  // Persist after the initial load so the empty starting state can't clobber storage.
-  useEffect(() => {
-    if (hydrated) saveTodos(todos);
-  }, [todos, hydrated]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -165,6 +138,7 @@ const MonthlyChart = ({
     } else {
       setCurrentMonth(currentMonth - 1);
     }
+    closeEditor();
   };
 
   const handleNextMonth = () => {
@@ -174,23 +148,21 @@ const MonthlyChart = ({
     } else {
       setCurrentMonth(currentMonth + 1);
     }
+    closeEditor();
   };
 
   const handleToday = () => {
     const today = new Date();
     setCurrentMonth(today.getMonth());
     setCurrentYear(today.getFullYear());
-    setSelectedKey(dateToKey(today));
+    closeEditor();
   };
 
-  const quadCounts = useMemo(() => quadrantCountsByDate(todos), [todos]);
-  const deadlineCounts = useMemo(() => deadlinesByDate(todos), [todos]);
-  const selectedTodos = useMemo(
-    () => todosForDate(todos, selectedKey),
-    [todos, selectedKey]
+  const eventMap = useMemo(() => eventsByDate(notes), [notes]);
+  const dayEvents = useMemo(
+    () => (editorKey ? eventsForDate(notes, editorKey) : []),
+    [notes, editorKey]
   );
-  const parsed = useMemo(() => parseWhen(quick), [quick]);
-  const quickTarget = parsed.date ?? selectedKey;
 
   const jumpTo = (key: string) => {
     const [y, m] = key.split("-").map(Number);
@@ -198,24 +170,68 @@ const MonthlyChart = ({
     setCurrentMonth(m - 1);
   };
 
-  const handleQuickAdd = () => {
-    const title = parsed.title.trim();
-    if (title === "") return;
-    setTodos((prev) => addTodoForDate(prev, title, quickTarget));
-    setSelectedKey(quickTarget);
-    jumpTo(quickTarget);
-    setQuick("");
-  };
+  // ── Event editor ──────────────────────────────────────────────────────────
+  function closeEditor() {
+    setEditorKey(null);
+    setEditorPos(null);
+    setEvTitle("");
+    setEvBody("");
+    setEditingEventId(null);
+  }
 
-  const handleDayAdd = () => {
-    if (dayDraft.trim() === "") return;
-    setTodos((prev) => addTodoForDate(prev, dayDraft, selectedKey));
-    setDayDraft("");
-  };
-
-  const handleSelectCell = (cell: DayData) => {
-    setSelectedKey(cell.dateKey);
+  const openEditor = (cell: DayData, rect: DOMRect) => {
     if (!cell.isCurrentMonth) jumpTo(cell.dateKey);
+    // Position a fixed popover near the cell, clamped on-screen.
+    let left = rect.left;
+    let top = rect.bottom + 6;
+    if (left + POP_W > window.innerWidth - 12) left = window.innerWidth - 12 - POP_W;
+    if (left < 12) left = 12;
+    if (top + POP_H > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - 6 - POP_H);
+    }
+    setEditorKey(cell.dateKey);
+    setEditorPos({ top, left });
+    setEvTitle("");
+    setEvBody("");
+    setEditingEventId(null);
+  };
+
+  const handleDayDoubleClick = (
+    cell: DayData,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    openEditor(cell, e.currentTarget.getBoundingClientRect());
+  };
+
+  const saveEvent = () => {
+    const title = evTitle.trim();
+    if (title === "" || editorKey === null) return;
+    const body = evBody.trim();
+    const next = editingEventId
+      ? updateNote(loadNotes(), editingEventId, { title, body })
+      : addNote(loadNotes(), { kind: "event", date: editorKey, title, body });
+    saveNotes(next);
+    setNotes(next);
+    setEvTitle("");
+    setEvBody("");
+    setEditingEventId(null);
+  };
+
+  const editEvent = (note: Note) => {
+    setEditingEventId(note.id);
+    setEvTitle(note.title);
+    setEvBody(note.body);
+  };
+
+  const removeEvent = (id: string) => {
+    const next = deleteNote(loadNotes(), id);
+    saveNotes(next);
+    setNotes(next);
+    if (editingEventId === id) {
+      setEditingEventId(null);
+      setEvTitle("");
+      setEvBody("");
+    }
   };
 
   if (!isVisible) return null;
@@ -225,10 +241,19 @@ const MonthlyChart = ({
       className={styles.chartOverlay}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className={styles.chartContainer}>
-        <div className={styles.productivitySummary}>
-          Current Session: {currentTimerInfo}
-        </div>
+      <div
+        className={styles.chartContainer}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Calendar"
+      >
+        <button
+          className={styles.closeButton}
+          onClick={onClose}
+          aria-label="Close calendar"
+        >
+          ×
+        </button>
 
         <div className={styles.chartHeader}>
           <div className={styles.monthYearDisplay}>
@@ -260,34 +285,7 @@ const MonthlyChart = ({
           </div>
         </div>
 
-        {/* Natural-language quick add */}
-        <div className={styles.quickRow}>
-          <input
-            className={styles.quickInput}
-            type="text"
-            value={quick}
-            placeholder="Add a task… e.g. 'next monday gym'"
-            onChange={(e) => setQuick(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleQuickAdd();
-              }
-            }}
-            aria-label="Quick-add a task with a natural-language date"
-          />
-          <button
-            className={styles.quickAddBtn}
-            onClick={handleQuickAdd}
-            disabled={parsed.title.trim() === ""}
-          >
-            Add
-          </button>
-        </div>
-        <div className={styles.chip}>
-          → <span className={styles.chipDate}>{formatKey(quickTarget)}</span>
-          {parsed.date ? "" : " (selected day)"}
-        </div>
+        <div className={styles.hintRow}>Double-click a day to add an event.</div>
 
         <div className={styles.calendarGrid}>
           {dayNames.map((day, index) => (
@@ -297,155 +295,164 @@ const MonthlyChart = ({
           ))}
 
           {monthData.map((day, index) => {
-            const tally = quadCounts[day.dateKey];
-            const count = tally
-              ? tally.q1 + tally.q2 + tally.q3 + tally.q4 + tally.unclassified
-              : 0;
-            const dotColors = tally ? dayDotColors(tally) : [];
-            const dueCount = deadlineCounts[day.dateKey] ?? 0;
-            const dueColor =
-              dueCount > 0
-                ? DEADLINE_META[deadlineStatusForKey(day.dateKey)].color
-                : undefined;
-            const isSelected = day.dateKey === selectedKey;
+            const events = eventMap[day.dateKey] ?? [];
+            const isEditing = day.dateKey === editorKey;
             return (
               <button
                 key={`day-${index}`}
                 type="button"
-                onClick={() => handleSelectCell(day)}
+                onDoubleClick={(e) => handleDayDoubleClick(day, e)}
                 className={[
                   styles.dayCell,
                   !day.isCurrentMonth ? styles.otherMonth : "",
                   day.isToday ? styles.today : "",
-                  isSelected ? styles.selected : "",
+                  isEditing ? styles.selected : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                aria-pressed={isSelected}
-                aria-current={day.isToday ? "date" : undefined}
-                aria-label={`${monthNames[currentMonth]} ${day.date}, ${count} task${
-                  count === 1 ? "" : "s"
-                }${dueCount > 0 ? `, ${dueCount} due` : ""}`}
+                aria-label={`${monthNames[currentMonth]} ${day.date}, ${
+                  events.length
+                } event${events.length === 1 ? "" : "s"}`}
               >
-                <div className={styles.dayNumber}>{day.date}</div>
-                {dueCount > 0 && (
-                  <span
-                    className={styles.deadlineMarker}
-                    style={{ color: dueColor }}
-                    title={`${dueCount} deadline${dueCount === 1 ? "" : "s"} due`}
-                    aria-hidden="true"
-                  >
-                    ⚑
+                <span className={styles.dayNumber}>{day.date}</span>
+
+                {events.length > 0 && (
+                  <span className={styles.cellEvents}>
+                    {events.slice(0, 2).map((ev) => (
+                      <span
+                        key={ev.id}
+                        className={styles.cellEvent}
+                        title={ev.body || ev.title}
+                      >
+                        {ev.title}
+                      </span>
+                    ))}
+                    {events.length > 2 && (
+                      <span className={styles.cellEventMore}>
+                        +{events.length - 2} more
+                      </span>
+                    )}
                   </span>
                 )}
-                {dotColors.length > 0 && (
-                  <div className={styles.taskDots}>
-                    {dotColors.map((color, i) => (
-                      <span
-                        key={i}
-                        className={styles.taskDot}
-                        style={{ background: color }}
-                      />
-                    ))}
-                  </div>
-                )}
+
                 {day.minutes > 0 && (
-                  <div className={styles.minutesValue}>{day.minutes}</div>
+                  <span className={styles.minutesValue}>{day.minutes}m</span>
                 )}
               </button>
             );
           })}
         </div>
 
-        {/* Selected-day detail */}
-        <div className={styles.dayDetail}>
-          <div className={styles.dayDetailHeader}>{formatKey(selectedKey)}</div>
-          {selectedTodos.length === 0 ? (
-            <div className={styles.emptyDay}>Nothing planned for this day.</div>
-          ) : (
-            <ul className={styles.dayList}>
-              {selectedTodos.map((todo) => {
-                const q = getQuadrant(todo);
-                return (
-                <li key={todo.id} className={styles.dayItem}>
-                  <label className={styles.dayItemLabel}>
-                    <input
-                      type="checkbox"
-                      className={styles.dayCheckbox}
-                      checked={todo.done}
-                      onChange={() => setTodos((prev) => toggleTodo(prev, todo.id))}
-                    />
-                    <span
-                      className={q ? styles.qDot : `${styles.qDot} ${styles.qDotUnclassified}`}
-                      style={q ? { background: QUADRANT_META[q].color } : undefined}
-                      aria-hidden="true"
-                    />
-                    <span
-                      className={todo.done ? styles.dayTitleDone : styles.dayTitle}
-                    >
-                      {todo.title}
-                    </span>
-                  </label>
-                  {!todo.done && (
-                    <DeadlinePill
-                      deadline={todo.deadline}
-                      onChange={(d) =>
-                        setTodos((prev) => setDeadline(prev, todo.id, d))
-                      }
-                      hideWhenEmpty
-                    />
-                  )}
-                  <div className={styles.dayActions}>
+        <div className={styles.totalTime}>Σ {totalProductivityMinutes} min</div>
+      </div>
+
+      {/* Google-Calendar-style event popover */}
+      {editorKey && editorPos && (
+        <>
+          <div className={styles.eventPopBackdrop} onClick={closeEditor} />
+          <div
+            className={styles.eventPop}
+            style={{ top: editorPos.top, left: editorPos.left }}
+            role="dialog"
+            aria-label={`Events for ${formatKey(editorKey)}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.eventPopHeader}>
+              <span className={styles.eventPopDate}>{formatKey(editorKey)}</span>
+              <button
+                className={styles.eventPopClose}
+                onClick={closeEditor}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {dayEvents.length > 0 && (
+              <ul className={styles.eventPopList}>
+                {dayEvents.map((ev) => (
+                  <li
+                    key={ev.id}
+                    className={
+                      editingEventId === ev.id
+                        ? styles.eventPopItemActive
+                        : styles.eventPopItem
+                    }
+                  >
+                    <span className={styles.eventPopItemDot} aria-hidden="true" />
                     <button
-                      className={styles.dayIconBtn}
-                      title="Move to backlog (unschedule)"
-                      aria-label={`Unschedule "${todo.title}"`}
-                      onClick={() =>
-                        setTodos((prev) => setTodoDate(prev, todo.id, undefined))
-                      }
+                      type="button"
+                      className={styles.eventPopItemText}
+                      onClick={() => editEvent(ev)}
+                      title={ev.body || "Edit"}
                     >
-                      ↩
+                      {ev.title}
                     </button>
                     <button
-                      className={`${styles.dayIconBtn} ${styles.dayDelete}`}
-                      aria-label={`Delete "${todo.title}"`}
-                      onClick={() => setTodos((prev) => deleteTodo(prev, todo.id))}
+                      type="button"
+                      className={styles.eventPopItemDel}
+                      onClick={() => removeEvent(ev.id)}
+                      aria-label={`Delete "${ev.title}"`}
                     >
                       ×
                     </button>
-                  </div>
-                </li>
-                );
-              })}
-            </ul>
-          )}
-          <div className={styles.dayAddRow}>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <input
-              className={styles.quickInput}
+              className={styles.eventPopTitle}
               type="text"
-              value={dayDraft}
-              placeholder={`Add to ${formatKey(selectedKey)}…`}
-              onChange={(e) => setDayDraft(e.target.value)}
+              value={evTitle}
+              autoFocus
+              placeholder={editingEventId ? "Edit event…" : "Add title…"}
+              onChange={(e) => setEvTitle(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  handleDayAdd();
+                  saveEvent();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  closeEditor();
                 }
               }}
-              aria-label="Add a task to the selected day"
+              aria-label="Event title"
             />
-            <button
-              className={styles.quickAddBtn}
-              onClick={handleDayAdd}
-              disabled={dayDraft.trim() === ""}
-            >
-              Add
-            </button>
+            <textarea
+              className={styles.eventPopBody}
+              value={evBody}
+              placeholder="Add details (optional)…"
+              onChange={(e) => setEvBody(e.target.value)}
+              rows={2}
+              aria-label="Event details"
+            />
+            <div className={styles.eventPopActions}>
+              {editingEventId && (
+                <button
+                  type="button"
+                  className={styles.eventPopCancel}
+                  onClick={() => {
+                    setEditingEventId(null);
+                    setEvTitle("");
+                    setEvBody("");
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.eventPopSave}
+                onClick={saveEvent}
+                disabled={evTitle.trim() === ""}
+              >
+                {editingEventId ? "Save" : "Add"}
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className={styles.totalTime}>Σ {totalProductivityMinutes} min</div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

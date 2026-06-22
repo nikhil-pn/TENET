@@ -89,9 +89,14 @@ export interface Habit {
  */
 export interface Note {
   id: string;
-  /** "daily" → a specific day · "monthly" → a month · "custom" → freeform. */
-  kind: "daily" | "monthly" | "custom";
-  /** For "daily" the day "YYYY-MM-DD"; for "monthly" the month "YYYY-MM". */
+  /**
+   * "daily" → a specific day · "monthly" → a month · "custom" → freeform ·
+   * "event" → a calendar event/reminder pinned to a day (multiple allowed).
+   */
+  kind: "daily" | "monthly" | "custom" | "event";
+  /**
+   * For "daily"/"event" the day "YYYY-MM-DD"; for "monthly" the month "YYYY-MM".
+   */
   date?: DateKey;
   title: string;
   body: string;
