@@ -1,8 +1,10 @@
 # TENET — Roadmap & Research
 
 Consolidated context so any new session (and future-you) knows what's built, what's next, and the
-research behind the big decisions. Pairs with `CLAUDE.md` (how to work on the repo) and
-`docs/warikoo-time-management-spec.md` (the prioritization feature).
+research behind the big decisions. Pairs with `CLAUDE.md` (how to work on the repo),
+`docs/warikoo-time-management-spec.md` (the prioritization feature), and
+`docs/ai-integration-research.md` (the opt-in in-app AI layer — provider choice, architecture,
+the weekly Coach + suggest-and-confirm classification, sourced).
 
 ---
 
@@ -19,6 +21,12 @@ dock**. Data is local-first in localStorage behind the `lib/persist.ts` seam, as
 
 ## Backlog — what to build next (prioritized)
 
+0. **Opt-in AI layer — IN PROGRESS (Phase 1: the weekly "Coach").** A small, privacy-first in-app
+   LLM behind one `lib/ai/` seam (opt-in, BYOK→OpenRouter+`zdr`, no-op when unset). The model only
+   *narrates locally-computed numbers*; deterministic `lib/prioritization.ts` stays authoritative.
+   Phase 1 = the weekly Coach digest (resurrects `Insights.tsx`/`Reflect.tsx` as a "Coach" dock
+   panel); Phase 2 = suggest-and-confirm Eisenhower classification. Full design, provider rationale,
+   feature catalog, and sources: **`docs/ai-integration-research.md`**.
 1. **Dark mode + design tokens** — replace hardcoded hex (incl. `QUADRANT_META` colors) with
    two-tier CSS variables in `globals.css` (primitives → semantic `--color-surface/-text/--q1..q4`),
    default to `prefers-color-scheme`, offer System/Light/Dark via `data-theme` (pre-paint script to

@@ -13,7 +13,7 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
 ## What this is (and isn't)
 
 - A **standalone, local-first** web app. It always works offline against localStorage and owns
-  its own data. **No AI/agent calls in the app, no live Obsidian/vault coupling.**
+  its own data. **No live Obsidian/vault coupling.**
 - **Cloud is an opt-in layer (added — pivots the old "no backend" rule).** When the two
   `NEXT_PUBLIC_SUPABASE_*` env vars are set, the app gains **Supabase auth (GitHub/Google) +
   cloud sync + a GitHub accountability streak**. Unset ⇒ it behaves exactly like the old
@@ -23,8 +23,19 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
   (server timestamp + insert-only RLS — no UPDATE/DELETE, even for the owner). The GitHub
   contribution graph rides on top as public motivation only — commits can be backdated, so the
   DB ledger is truth, the green squares are hype.
-- The "intelligence" (any future AI/agent help) lives **outside** the app — in the terminal via
-  Claude Code / MCP — never the app calling an AI API.
+- **In-app AI is an opt-in layer (added — pivots the old "no AI/agent calls in the app" rule, the
+  same way cloud pivoted "no backend").** Off by default and gated behind a BYOK provider key; when
+  unconfigured, the entire `lib/ai/` layer no-ops and the app makes **zero** AI network calls. It is
+  **strictly additive**: the deterministic `lib/prioritization.ts` logic (`getQuadrant`, `nudges`,
+  `quadrantBreakdown`) stays the always-on source of truth and the offline fallback. The model only
+  **narrates locally-computed numbers** (compute-first / narrate-second) and **suggests**
+  classifications the user confirms — it never invents facts or silently mutates data. Static export
+  is preserved (client-side `fetch` to OpenRouter with `zdr:true`; no server of ours). See
+  `docs/ai-integration-research.md` for the full rationale, provider choice, and phased plan.
+- The **heavy** "intelligence" (deep agent help) still lives **outside** the app — in the terminal
+  via Claude Code / MCP. The in-app AI layer is deliberately small (a weekly coach digest + capture
+  assists), and its single `lib/ai/provider.ts` seam lets the Electron edition swap to a local model
+  (Ollama) later — consistent with "intelligence outside the app, data stays local."
 - **Future (don't build now, just don't block it):** a native macOS **Electron "pro" edition**
   is the north-star. There, data becomes files (ideally inside an **Obsidian vault** folder) that
   **Claude Code / an MCP server** and optionally Obsidian can read/write, plus GitHub backup.
@@ -68,6 +79,16 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
   - `lib/githubStreak.ts` — the daily accountability commit to the `tenet-log` repo (Contents
     API, CORS, deduped to one commit/active day).
   - `supabase/migrations/0001_init.sql` — schema + RLS (the source of truth for the cloud shape).
+- **AI layer (opt-in, BYOK-gated, all no-op when unconfigured):**
+  - `lib/ai/config.ts` — the gate (the `lib/supabase.ts` analogue): typed `AiConfig` read from the
+    persist seam (`tenet.ai.config.v1`), `getAiConfig()`/null, `aiEnabled()`/`coachEnabled()`. The
+    key is user-supplied BYOK in localStorage — **never** a `NEXT_PUBLIC_*` var.
+  - `lib/ai/provider.ts` — the single LLM client seam (the `lib/persist.ts` analogue for model
+    calls): `chat(messages, {schema})` → parsed JSON or **null on any failure** (callers fall back
+    to deterministic). Client-side `fetch` to OpenRouter, `zdr:true`. Swapping provider/host/proxy
+    happens HERE only — never scatter model calls into domain/UI code.
+  - *(coming next, per the Phase-1 plan): `lib/ai/snapshot.ts` (deterministic digest builder),
+    `lib/ai/coach.ts` + `lib/ai/prompts.ts` (the weekly Coach), and `app/components/CoachPanel.tsx`.*
 
 > **Live instance (provisioned 2026-06-20):** Supabase project ref `jfxbltohhirevwunyipd`
 > (`https://jfxbltohhirevwunyipd.supabase.co`); GitHub OAuth enabled; schema loaded; verified
@@ -86,6 +107,11 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
    `ToggleButton` via `getElementById("main-toggle")` and the selector `#main-toggle ~ .button`,
    toggling a literal global class `button-red`. **Never rename the `main-toggle` id, the
    ToggleButton `.button` class, or drop the `button-red` style.**
+6. **In-app AI attaches ONLY through `lib/ai/` and is opt-in/no-op by default** (the cloud-layer
+   precedent). Components import `lib/ai/*` but never speak HTTP; provider/model is config, not code.
+   Deterministic `lib/prioritization.ts` stays authoritative and the offline fallback. The model
+   narrates pre-computed numbers and suggests (confirm-only) — it never invents data or auto-mutates
+   it. Send a minimized derived digest, never raw note bodies by default; route with `zdr:true`.
 
 ## Status — what's built
 
@@ -107,7 +133,13 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
       `NEXT_PUBLIC_SUPABASE_*` (in `.env.local`); unset ⇒ app stays local-only. See `README.md`.
       Remaining: Vercel deploy + production redirect URLs.
 
+- [~] **Opt-in AI layer — IN PROGRESS (Phase 1: the weekly "Coach").** `lib/ai/{config,provider}.ts`
+      scaffolded (no-op until BYOK-configured). Next: deterministic `lib/ai/snapshot.ts` digest →
+      `lib/ai/coach.ts` + a `CoachPanel` dock item (resurrecting `Insights.tsx`/`Reflect.tsx`).
+      Full design + provider rationale: `docs/ai-integration-research.md`.
+
 **Next up (see `docs/roadmap-and-research.md` for the full prioritized backlog):**
+finish the AI Coach (Phase 1) → AI suggest-and-confirm Eisenhower classification (Phase 2) →
 dark mode + design tokens → data safety (JSON export/import) → a persistent "Today" home →
 swipe gestures + completion delight → settings → realtime multi-device push (Supabase Realtime).
 In-app reminders stay foreground-only by design.
@@ -127,11 +159,18 @@ In-app reminders stay foreground-only by design.
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000 (Turbopack)
-npm run build    # static export to ./out
-npx tsc --noEmit # type check
+npm run dev       # http://localhost:3000 (Turbopack)
+npm run dev:clean # same, but wipes .next first — use if dev throws an internal
+                  # server error / "cannot open …app-paths-manifest.json"
+npm run build     # production build / static export
+npx tsc --noEmit  # type check
 npm run lint
 ```
+
+> **Run only ONE `next dev` at a time.** Two instances share the same `.next/` dev cache
+> (regardless of port) and corrupt each other's manifests → internal server errors. If Next
+> auto-starts a second on :3001, you now have two — kill them and run `npm run dev:clean`. You do
+> **not** need `npm run build` to see a UI change; dev hot-reloads on save.
 
 ## Known minor debt
 
