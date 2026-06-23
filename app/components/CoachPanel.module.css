@@ -1,0 +1,119 @@
+/* Centered modal card (dim backdrop), matching the Matrix/Calendar modals so the
+   home + bottom nav stay visible behind it. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 32px);
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+  color: #333;
+}
+
+.container {
+  width: 97%;
+  max-width: 920px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  background: #f4f5f7;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 14px clamp(16px, 3vw, 28px);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #8a8a8a;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 22px clamp(18px, 3vw, 32px) 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* "Still learning" calm state — never reads as an error or a scold. */
+.learning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eef1f4;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.learningDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #bdbdbd;
+}
+
+.learningText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #666;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin: 0 0 12px;
+}

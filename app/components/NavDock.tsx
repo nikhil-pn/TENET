@@ -2,7 +2,7 @@
 import React from "react";
 import styles from "./NavDock.module.css";
 
-export type DockPanel = "calendar" | "tasks" | "matrix";
+export type DockPanel = "calendar" | "tasks" | "matrix" | "coach";
 
 interface NavDockProps {
   active: DockPanel | null;
@@ -66,15 +66,32 @@ const ICONS: Record<DockPanel, React.ReactNode> = {
       <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
     </svg>
   ),
+  coach: (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <polygon points="16.2,7.8 13.7,13.7 7.8,16.2 10.3,10.3" />
+    </svg>
+  ),
 };
 
 const LABELS: Record<DockPanel, string> = {
   calendar: "Calendar",
   tasks: "Tasks",
   matrix: "Matrix",
+  coach: "Coach",
 };
 
-const ORDER: DockPanel[] = ["calendar", "tasks", "matrix"];
+const ORDER: DockPanel[] = ["calendar", "tasks", "matrix", "coach"];
 
 const NavDock = ({ active, onSelect }: NavDockProps) => {
   return (

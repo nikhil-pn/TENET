@@ -5,6 +5,7 @@ import ToggleButton from "./components/ToggleButton";
 import MonthlyChart from "./components/MonthlyChart";
 import TodoPanel from "./components/TodoPanel";
 import MatrixDashboard from "./components/MatrixDashboard";
+import CoachPanel from "./components/CoachPanel";
 import DeadlineReminder from "./components/DeadlineReminder";
 import StickyNotes from "./components/StickyNotes";
 import HabitTracker from "./components/HabitTracker";
@@ -108,7 +109,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gray-50 p-8 relative">
+    <div className="h-screen p-8 relative" style={{ backgroundColor: "#f7f8fa" }}>
       <SplashScreen />
 
       <MonthlyChart
@@ -121,6 +122,7 @@ export default function Home() {
       />
       <TodoPanel isVisible={activePanel === "tasks"} onClose={closePanel} />
       <MatrixDashboard isVisible={activePanel === "matrix"} onClose={closePanel} />
+      <CoachPanel isVisible={activePanel === "coach"} onClose={closePanel} />
 
       <AuthButton onUserChange={handleUserChange} />
       <StickyNotes />
