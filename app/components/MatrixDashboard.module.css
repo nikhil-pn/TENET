@@ -1,17 +1,33 @@
-/* Centered modal card (dim backdrop) — leaves the home screen + bottom nav
-   visible behind it, matching the Calendar/Create modals. Reduced width. */
+/* Priority-matrix dashboard — same "Soft Focus / soft elevation on white"
+   material as the home, clock, and Create modal: a near-white canvas, soft
+   layered shadows, a concave focus-meter well, raised quadrant tiles. Colour is
+   minimal — the four quadrant hues are the only strong colour, used as small
+   caps/dots, plus the green meter when on-track. See docs/brand-and-design-language.md. */
+
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(20, 26, 40, 0.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: clamp(12px, 3vw, 32px);
   box-sizing: border-box;
   font-family: "Inter", sans-serif;
-  color: #333;
+  color: #3a3f47;
+  animation: mxOverlayIn 0.2s ease;
+}
+
+@keyframes mxOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .container {
@@ -20,11 +36,23 @@
   max-height: 94vh;
   display: flex;
   flex-direction: column;
-  background: #f4f5f7;
-  border-radius: 16px;
+  background: #edf0f5;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25),
-    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 24px 60px rgba(30, 41, 59, 0.24),
+    0 8px 20px rgba(30, 41, 59, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: mxContainerIn 0.24s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes mxContainerIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .header {
@@ -32,33 +60,33 @@
   display: flex;
   align-items: center;
   gap: clamp(14px, 3vw, 26px);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  padding: 12px clamp(16px, 3vw, 28px);
+  background: linear-gradient(180deg, #ffffff, #f4f6fa);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.06);
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
+  padding: 13px clamp(16px, 3vw, 28px);
 }
 
-/* Quiet gray heading — sits on the same line as the focus strip, not competing. */
+/* Quiet gray heading — doesn't compete with the focus strip. */
 .title {
   flex-shrink: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #8a8a8a;
+  color: #9097a0;
   margin: 0;
 }
 
-/* ── Focus-health strip: the in-header infographic + "where to focus" tip ── */
+/* ── Focus-health strip — a concave well holding the meter + tip ── */
 .statusBar {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: clamp(14px, 3vw, 28px);
-  background: #f5f6f8;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 9px 14px;
+  background: #e9ecf2;
+  border-radius: 14px;
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.09),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+  padding: 10px 16px;
 }
 
 .meterBlock {
@@ -79,7 +107,7 @@
 .meterLabel {
   font-size: 12px;
   font-weight: 500;
-  color: #888;
+  color: #868b94;
 }
 
 .meterValue {
@@ -88,7 +116,7 @@
 }
 
 .meterNow {
-  color: #555;
+  color: #5a5f68;
 }
 
 .meterNowOn {
@@ -96,16 +124,18 @@
 }
 
 .meterRef {
-  color: #b8b8b8;
+  color: #b0b5bd;
   font-weight: 500;
 }
 
-/* Slim meter with a 75% reference tick (not overflow:hidden so the tick shows). */
+/* Slim meter — a deeper inset groove with a 75% reference tick. */
 .meterTrack {
   position: relative;
-  height: 6px;
-  background: #e6e7ea;
+  height: 7px;
   border-radius: 999px;
+  background: #dfe3e9;
+  box-shadow: inset 1px 1px 3px rgba(30, 41, 59, 0.16),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.7);
 }
 
 .meterFill,
@@ -114,16 +144,17 @@
   top: 0;
   bottom: 0;
   left: 0;
-  min-width: 4px;
+  min-width: 5px;
   border-radius: 999px;
 }
 
 .meterFill {
-  background: #c2c5cb;
+  background: linear-gradient(180deg, #cbced4, #b7bbc3);
 }
 
 .meterFillOn {
-  background: #7cb342;
+  background: linear-gradient(180deg, #8bc34a, #6da838);
+  box-shadow: 0 1px 2px rgba(109, 168, 56, 0.4);
 }
 
 .meterMarker {
@@ -132,7 +163,7 @@
   bottom: -3px;
   width: 2px;
   border-radius: 1px;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(30, 41, 59, 0.3);
 }
 
 .tip {
@@ -144,19 +175,18 @@
   margin: 0;
 }
 
-/* Neutral gray indicator in place of the old colored bulb emoji. */
 .tipDot {
   flex-shrink: 0;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #bdbdbd;
+  background: #b6bbc3;
 }
 
 .tipText {
   font-size: 13px;
   line-height: 1.35;
-  color: #666;
+  color: #686d75;
 }
 
 @media (max-width: 760px) {
@@ -165,7 +195,6 @@
     align-items: stretch;
     gap: 10px;
   }
-
   .title {
     font-size: 18px;
   }
@@ -177,7 +206,6 @@
     align-items: stretch;
     gap: 10px;
   }
-
   .meterBlock {
     width: 100%;
   }
@@ -188,36 +216,8 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 28px clamp(20px, 3vw, 36px) 36px;
+  padding: 26px clamp(20px, 3vw, 36px) 34px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-.insightsSection {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-
-@media (min-width: 880px) {
-  .insightsSection {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-}
-
-.card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px 18px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.cardTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
-  margin: 0 0 12px;
+  gap: 22px;
 }

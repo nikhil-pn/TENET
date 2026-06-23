@@ -1,16 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* Habit tracker — soft white tiles mirroring the sticky notes, on the near-white
+   home. Same depth recipe: a subtle 145° gradient surface + a soft layered drop
+   shadow that blends on white. Habit-tracking elements: a check that presses in
+   (concave well → fills when done), a streak line, and a 7-day strip of wells
+   that fill as days complete. See docs/brand-and-design-language.md. */
 .tracker {
   position: fixed;
-  top: 64px;
-  left: 18px;
+  top: 66px;
+  left: 22px;
   z-index: 40;
-  width: 220px;
+  width: 226px;
   max-height: calc(100vh - 150px);
   overflow-y: auto;
   overflow-x: visible;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 6px 8px 8px;
+  gap: 22px;
+  padding: 16px 12px 12px;
   /* Don't block clicks on the empty column; the cards opt back in. */
   pointer-events: none;
   scrollbar-width: none;
@@ -24,139 +31,168 @@
 .cardDone {
   pointer-events: auto;
   position: relative;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-left: 4px solid var(--accent, #e3e3e3);
-  border-radius: 14px;
-  padding: 12px 14px;
+  padding: 17px 17px 16px;
+  border-radius: 22px;
   font-family: "Inter", sans-serif;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-  animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.2) both;
-}
-
-.cardDone {
-  background: linear-gradient(180deg, #f6fbf4 0%, #ffffff 60%);
+  background: linear-gradient(145deg, #ffffff, #f1f3f7);
+  box-shadow: 0 5px 15px rgba(30, 41, 59, 0.1),
+    0 2px 5px rgba(30, 41, 59, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: fadeIn 0.3s ease both;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover,
 .cardDone:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.07);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(30, 41, 59, 0.13),
+    0 4px 9px rgba(30, 41, 59, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   z-index: 1;
 }
 
-.topRow {
+.head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 13px;
 }
 
-/* Today's check toggle — a circular tap target */
+/* The check — a concave well inviting a press; fills convex + green when done.
+   The well's depth comes from the dark inset (which reads on white); state is
+   carried by depth + colour + the tick (never shadow alone). */
 .check,
 .checkDone {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.18s;
+  border: none;
   padding: 0;
+  transition: box-shadow 0.2s ease, transform 0.12s ease, color 0.2s ease,
+    background 0.2s ease;
 }
 
 .check {
-  background: #fff;
-  border: 2px solid #d8d8d8;
+  background: #f3f5f9;
   color: transparent;
+  box-shadow: inset 3px 3px 6px rgba(30, 41, 59, 0.13),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
 }
 
 .check:hover {
-  border-color: #4caf50;
+  box-shadow: inset 4px 4px 7px rgba(30, 41, 59, 0.16),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
 }
 
 .checkDone {
-  background: #4caf50;
-  border: 2px solid #4caf50;
+  background: linear-gradient(145deg, #5cb860, #46a04a);
   color: #fff;
-  box-shadow: 0 2px 5px rgba(76, 175, 80, 0.35);
+  box-shadow: 2px 3px 7px rgba(70, 160, 74, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+.check:active,
 .checkDone:active {
-  transform: scale(0.9);
+  transform: scale(0.93);
+}
+
+.check:focus-visible,
+.checkDone:focus-visible {
+  outline: 2px solid #9aa0aa;
+  outline-offset: 2px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .name {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: #333;
+  color: #5a5f68;
+  line-height: 1.25;
   word-break: break-word;
-  line-height: 1.3;
 }
 
-.metaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-  padding-left: 36px;
+.sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #686d75;
+  letter-spacing: 0.2px;
 }
 
+.subZero {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #868b94;
+  letter-spacing: 0.2px;
+}
+
+/* 7-day strip — engraved wells; a done day is a filled convex dot. */
 .strip {
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  margin-top: 15px;
+  padding-left: 2px;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #ececec;
+  background: #f3f5f9;
+  box-shadow: inset 1.5px 1.5px 3px rgba(30, 41, 59, 0.13),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .dotDone {
-  background: #71a600;
+  position: relative;
+  background: linear-gradient(145deg, #ffffff, #e4e8ee);
+  box-shadow: 1px 1.5px 3px rgba(30, 41, 59, 0.13),
+    -1px -1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.dotDone::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #7d828c;
 }
 
 .dotToday {
-  outline: 2px solid rgba(0, 0, 0, 0.16);
-  outline-offset: 1px;
+  outline: 2px solid rgba(105, 110, 122, 0.5);
+  outline-offset: 2px;
 }
 
-.streak {
-  flex-shrink: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #555;
-}
-
-.streakZero {
-  flex-shrink: 0;
-  font-size: 12.5px;
-  font-weight: 400;
-  color: #bbb;
-}
-
+/* Delete — a small convex knob that presses in on click. */
 .delete {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
   border: none;
-  background: transparent;
-  color: rgba(0, 0, 0, 0.2);
-  font-size: 17px;
+  border-radius: 50%;
+  color: #8b8f98;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #ffffff, #eef1f5);
+  box-shadow: 1px 2px 5px rgba(30, 41, 59, 0.16),
+    -1px -1px 2px rgba(255, 255, 255, 0.9);
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition: opacity 0.18s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .card:hover .delete,
@@ -165,18 +201,25 @@
 }
 
 .delete:hover {
-  color: #f44336;
-  background: rgba(244, 67, 54, 0.1);
+  color: #cf6b62;
 }
 
-@keyframes slideIn {
-  0% {
+.delete:active {
+  box-shadow: inset 1px 1px 3px rgba(30, 41, 59, 0.2);
+}
+
+.delete:focus-visible {
+  outline: 2px solid #9aa0aa;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  from {
     opacity: 0;
-    transform: translateX(-18px) scale(0.96);
   }
-  100% {
+  to {
     opacity: 1;
-    transform: translateX(0) scale(1);
   }
 }
 
@@ -190,14 +233,11 @@
 @media (max-width: 640px) {
   .tracker {
     top: 58px;
-    left: 8px;
-    width: 158px;
-    gap: 10px;
+    left: 10px;
+    width: 178px;
+    gap: 20px;
   }
   .name {
-    font-size: 13px;
-  }
-  .metaRow {
-    padding-left: 0;
+    font-size: 13.5px;
   }
 }

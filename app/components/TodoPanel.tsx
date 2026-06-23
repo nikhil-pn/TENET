@@ -38,10 +38,43 @@ const ESTIMATE_CHIPS: { label: string; minutes: number }[] = [
 // The three things you can create here. Task is the default; Sticky and Habit
 // are folded in behind a segmented switch so the modal stays one clean surface.
 type Mode = "task" | "sticky" | "habit";
-const MODES: { id: Mode; label: string; icon: string }[] = [
-  { id: "task", label: "Task", icon: "📋" },
-  { id: "sticky", label: "Sticky", icon: "🗒️" },
-  { id: "habit", label: "Habit", icon: "🔥" },
+
+// Monochrome line icons matching the dock's style (currentColor, round caps) —
+// no emoji, to keep the modal in the minimalist neumorphic theme.
+const iconProps = {
+  width: 17,
+  height: 17,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.9,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
+const TASK_ICON = (
+  <svg {...iconProps}>
+    <polyline points="3.5,7 5,8.6 8,5.4" />
+    <polyline points="3.5,17 5,18.6 8,15.4" />
+    <line x1="11" y1="7" x2="20.5" y2="7" />
+    <line x1="11" y1="17" x2="20.5" y2="17" />
+  </svg>
+);
+const STICKY_ICON = (
+  <svg {...iconProps}>
+    <path d="M5 3.5h11a2 2 0 0 1 2 2v8l-5 5H5a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2z" />
+    <path d="M18 13.5h-3a2 2 0 0 0-2 2v3" />
+  </svg>
+);
+const HABIT_ICON = (
+  <svg {...iconProps}>
+    <path d="M12 2.6c3.1 3.4 5.3 5.9 5.3 9.4a5.3 5.3 0 0 1-10.6 0c0-1.7.8-3.3 2-4.6.1 1.4.9 2.3 1.8 2.6.5-2.5-.6-5-.5-7.4z" />
+  </svg>
+);
+const MODES: { id: Mode; label: string; icon: React.ReactNode }[] = [
+  { id: "task", label: "Task", icon: TASK_ICON },
+  { id: "sticky", label: "Sticky", icon: STICKY_ICON },
+  { id: "habit", label: "Habit", icon: HABIT_ICON },
 ];
 
 const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
@@ -355,7 +388,7 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
                     aria-pressed={cDeadline !== undefined}
                     onClick={() => setShowDeadlinePicker((v) => !v)}
                   >
-                    {cDeadline ? `⚑ ${formatDeadline(cDeadline)}` : "📅 Deadline"}
+                    {cDeadline ? formatDeadline(cDeadline) : "Deadline"}
                   </button>
                   {showDeadlinePicker && (
                     <DeadlinePicker
@@ -368,10 +401,12 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
                 </span>
               )}
               {draftMeta && (
-                <span
-                  className={styles.quadBadge}
-                  style={{ background: draftMeta.color }}
-                >
+                <span className={styles.quadBadge}>
+                  <span
+                    className={styles.quadDot}
+                    style={{ background: draftMeta.color }}
+                    aria-hidden="true"
+                  />
                   {draftMeta.short}
                 </span>
               )}
@@ -379,8 +414,8 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
             {(quickWin || needsPlan) && (
               <div className={styles.hintLine}>
                 {quickWin
-                  ? "⚡ 2-min task — just do it, no need to schedule."
-                  : "🧱 Long task — consider a ~90-min block or break it down."}
+                  ? "2-min task — just do it, no need to schedule."
+                  : "Long task — consider a ~90-min block or break it down."}
               </div>
             )}
           </>
@@ -390,7 +425,7 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
         {mode === "sticky" && (
           <div className={styles.composer}>
             <div className={styles.composerHead}>
-              <span className={styles.composerLabel}>🗒️ Sticky note</span>
+              <span className={styles.composerLabel}>Sticky note</span>
               <span
                 className={justPinned ? styles.composerOk : styles.composerHint}
                 aria-live="polite"
@@ -422,7 +457,7 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
         {mode === "habit" && (
           <div className={styles.composer}>
             <div className={styles.composerHead}>
-              <span className={styles.composerLabel}>🔥 Daily habit</span>
+              <span className={styles.composerLabel}>Daily habit</span>
               <span
                 className={justAddedHabit ? styles.composerOk : styles.composerHint}
                 aria-live="polite"
@@ -476,14 +511,13 @@ const TodoPanel = ({ isVisible, onClose }: TodoPanelProps) => {
                       ) : (
                         <>
                           <span className={styles.habitRowName}>
-                            {habit.emoji ? `${habit.emoji} ` : ""}
                             {habit.name}
                           </span>
                           <span
                             className={styles.habitRowStreak}
                             title="Current streak"
                           >
-                            🔥 {currentStreak(habit)}
+                            {currentStreak(habit)}d
                           </span>
                           <button
                             type="button"

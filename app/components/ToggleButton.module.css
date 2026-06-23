@@ -34,15 +34,16 @@
 
 .toggle .button {
   transition: all 300ms cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 10px 20px -4px rgba(0, 0, 0, 0.3),
-    inset 0 -2px 3px -1px rgba(0, 0, 0, 0.1),
-    0 -8px 12px -1px rgba(255, 255, 255, 0.5),
-    inset 0 2px 3px -1px rgba(255, 255, 255, 0.2),
+  /* Softened to match the cards/clock material (cooler, lighter drop shadow). */
+  box-shadow: 0 8px 20px -2px rgba(30, 41, 59, 0.14),
+    inset 0 -2px 3px -1px rgba(0, 0, 0, 0.08),
+    0 -6px 12px -1px rgba(255, 255, 255, 0.6),
+    inset 0 2px 3px -1px rgba(255, 255, 255, 0.6),
     inset 0 0 4px 1px rgba(255, 255, 255, 0.6),
-    inset 0 15px 25px 0 rgba(255, 255, 255, 0.2);
+    inset 0 12px 22px 0 rgba(255, 255, 255, 0.35);
   border-radius: 68.8px;
   position: absolute;
-  background: #eaeaea;
+  background: linear-gradient(145deg, #ffffff, #eef1f5);
   margin-left: -34.4px;
   margin-top: -34.4px;
   display: block;

@@ -1,34 +1,17 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Note } from "@/lib/types";
 import { loadNotes, saveNotes, customNotes, deleteNote } from "@/lib/notes";
 import { subscribeWrites } from "@/lib/persist";
 import styles from "./StickyNotes.module.css";
 
-// Accent palette — white paper, a single muted colour on the top edge. The
-// colour is picked deterministically from the note id so a note keeps the same
-// look across reloads. Kept subtle to sit inside the black/white/grey theme.
-const ACCENTS = [
-  "#e3b341", // amber
-  "#6fae5f", // green
-  "#6ea8d8", // blue
-  "#d98aa6", // rose
-  "#a99bd6", // lilac
-] as const;
-
-// Small deterministic hash → stable colour without storing it.
-function hash(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 /**
  * Sticky notes pinned to the home screen (top-right, under the account chip).
- * Created from the Tasks modal's note composer; surfaced here as little paper
- * cards that drop in with a flourish. Reads the same custom notes the old Notes
- * panel used, and reloads through the persistence write-seam so a note added in
- * the modal appears here instantly.
+ * Created from the Tasks modal's note composer; surfaced here as neumorphic
+ * paper tiles — a grey soft-UI card held by a pushpin and tilted slightly, in
+ * the reference neumorphism style (see docs/brand-and-design-language.md).
+ * Reads the same custom notes the old Notes panel used, and reloads through the
+ * persistence write-seam so a note added in the modal appears here instantly.
  */
 const StickyNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -52,27 +35,20 @@ const StickyNotes = () => {
 
   return (
     <div className={styles.stack} aria-label="Sticky notes">
-      {notes.map((note) => {
-        const accent = ACCENTS[hash(note.id) % ACCENTS.length];
-        return (
-          <div
-            key={note.id}
-            className={styles.note}
-            style={{ "--accent": accent } as React.CSSProperties}
+      {notes.map((note) => (
+        <div key={note.id} className={styles.note}>
+          <span className={styles.pin} aria-hidden="true" />
+          <button
+            className={styles.delete}
+            onClick={() => handleDelete(note.id)}
+            aria-label="Remove sticky note"
           >
-            <span className={styles.accent} aria-hidden="true" />
-            <button
-              className={styles.delete}
-              onClick={() => handleDelete(note.id)}
-              aria-label="Remove sticky note"
-            >
-              ×
-            </button>
-            <p className={styles.text}>{note.title}</p>
-            {note.body && <p className={styles.body}>{note.body}</p>}
-          </div>
-        );
-      })}
+            ×
+          </button>
+          <p className={styles.text}>{note.title}</p>
+          {note.body && <p className={styles.body}>{note.body}</p>}
+        </div>
+      ))}
     </div>
   );
 };

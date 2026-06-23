@@ -133,16 +133,19 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
       `NEXT_PUBLIC_SUPABASE_*` (in `.env.local`); unset ⇒ app stays local-only. See `README.md`.
       Remaining: Vercel deploy + production redirect URLs.
 
-- [~] **Opt-in AI layer — IN PROGRESS (Phase 1: the weekly "Coach").** `lib/ai/{config,provider}.ts`
-      scaffolded (no-op until BYOK-configured). Next: deterministic `lib/ai/snapshot.ts` digest →
-      `lib/ai/coach.ts` + a `CoachPanel` dock item (resurrecting `Insights.tsx`/`Reflect.tsx`).
-      Full design + provider rationale: `docs/ai-integration-research.md`.
+- [x] **Opt-in AI layer — Phase 1 (the weekly "Coach") LIVE.** `lib/ai/{config,provider,snapshot,
+      coach,prompts}.ts` + a `CoachPanel` dock item (resurrecting `Insights.tsx`/`Reflect.tsx`).
+      Off by default; BYOK→OpenRouter+`zdr`; the model only narrates the locally-computed digest,
+      with a deterministic templated fallback when AI is off/unreachable. **Phase 2 (AI Eisenhower
+      classification) is intentionally DROPPED — important/urgent stays a manual 2-toggle choice by
+      design (AI can't know personal importance; auto-apply would corrupt the time-audit).** Optional
+      future AI: P3 Supabase Edge proxy (hide the key), P4 on-device WebLLM. Full design + rationale:
+      `docs/ai-integration-research.md`.
 
 **Next up (see `docs/roadmap-and-research.md` for the full prioritized backlog):**
-finish the AI Coach (Phase 1) → AI suggest-and-confirm Eisenhower classification (Phase 2) →
-dark mode + design tokens → data safety (JSON export/import) → a persistent "Today" home →
-swipe gestures + completion delight → settings → realtime multi-device push (Supabase Realtime).
-In-app reminders stay foreground-only by design.
+data safety (JSON export/import + `navigator.storage.persist()`) → dark mode + design tokens →
+a persistent "Today" home → swipe gestures + completion delight → settings → realtime multi-device
+push (Supabase Realtime). In-app reminders stay foreground-only by design.
 
 ## Conventions
 

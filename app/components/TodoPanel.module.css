@@ -1,31 +1,57 @@
+/* "Create" modal — the Task / Sticky / Habit composer. Styled in the home's
+   "Soft Focus / soft elevation on white" material so it reads as the same UI as
+   the clock, calendar and home cards: gradient surfaces, soft layered shadows,
+   concave "well" inputs, convex knobs. Colour is minimal — subtle tints only on
+   active / semantic states. See docs/brand-and-design-language.md. */
+
 .todoOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(20, 26, 40, 0.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
+  animation: overlayIn 0.2s ease;
 }
 
 .todoContainer {
-  width: 90%;
-  max-width: 520px;
-  max-height: 85vh;
+  width: 100%;
+  max-width: 500px;
+  max-height: 86vh;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2),
-    inset 0 2px 0px rgba(255, 255, 255, 0.5),
-    inset 0 -3px 0px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  background: linear-gradient(145deg, #ffffff, #f2f4f8);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(30, 41, 59, 0.22),
+    0 8px 20px rgba(30, 41, 59, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  padding: 22px;
   font-family: "Inter", sans-serif;
-  color: #333;
+  color: #3a3f47;
   position: relative;
+  animation: containerIn 0.24s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes containerIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .header {
@@ -33,292 +59,34 @@
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.07);
 }
 
 .title {
-  font-size: 26px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c2f36;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #999;
-  font-weight: 400;
-}
-
-.addRow {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 14px;
-  font-size: 16px;
-  font-family: "Inter", sans-serif;
-  color: #333;
-  background: #f8f8f8;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  outline: none;
-  transition: all 0.2s;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.input:focus {
-  border-color: #4caf50;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.12);
-}
-
-.addButton {
-  width: 42px;
-  flex-shrink: 0;
-  font-size: 24px;
-  font-weight: 400;
-  color: #555;
-  background: #f5f5f5;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.addButton:hover:not(:disabled) {
-  background: #eaeaea;
-  transform: translateY(-1px);
-}
-
-.addButton:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.addButton:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 4px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.item:last-child {
-  border-bottom: none;
-}
-
-.itemLabel {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: #4caf50;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.titleText {
-  font-size: 16px;
-  color: #333;
-  word-break: break-word;
-}
-
-.titleTextDone {
-  font-size: 16px;
-  color: #999;
-  text-decoration: line-through;
-  word-break: break-word;
-}
-
-.deleteButton {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: #bbb;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.deleteButton:hover {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-}
-
-.emptyState {
-  text-align: center;
-  color: #999;
-  font-size: 15px;
-  padding: 32px 16px;
-}
-
-.footer {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  text-align: center;
-  font-size: 14px;
-  color: #777;
-}
-
-/* ── Classify-on-add strip ── */
-.classifyRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.flag,
-.flagOnImp,
-.flagOnUrg {
-  padding: 5px 10px;
   font-size: 13px;
-  font-family: "Inter", sans-serif;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #f5f5f5;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.flagOnImp {
-  background: #4caf50;
-  border-color: #4caf50;
-  color: #fff;
-}
-
-.flagOnUrg {
-  background: #ff9800;
-  border-color: #ff9800;
-  color: #fff;
-}
-
-.chips {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.estChip,
-.chipActive {
-  padding: 5px 9px;
-  font-size: 12px;
-  font-family: "Inter", sans-serif;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #f8f8f8;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.chipActive {
-  background: #eef6ee;
-  border-color: #4caf50;
-  color: #2e7d32;
+  color: #9aa0aa;
   font-weight: 500;
 }
 
-.quadBadge {
-  margin-left: auto;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.hintLine {
-  font-size: 12.5px;
-  color: #777;
-  margin-bottom: 10px;
-  padding-left: 2px;
-}
-
-/* ── Quadrant dot on list rows ── */
-.qDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: #ccc;
-}
-
-.qDot[data-unclassified] {
-  background: transparent;
-  border: 1.5px dashed #ccc;
-}
-
-/* ── Deadline control (classify strip) — only shown for Important + Urgent ── */
-.deadlineWrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.deadlineBtn,
-.deadlineOn {
-  padding: 5px 10px;
-  font-size: 13px;
-  font-family: "Inter", sans-serif;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #f5f5f5;
-  color: #666;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-
-.deadlineOn {
-  background: #fff;
-  font-weight: 600;
-}
-
-/* ── Segmented mode switch (Task · Sticky · Habit) ── */
+/* ── Segmented mode switch — a concave track with a raised active pill ── */
 .segmented {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  margin-bottom: 16px;
-  background: #f1f1f1;
-  border-radius: 12px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  gap: 5px;
+  padding: 5px;
+  margin-bottom: 18px;
+  background: #eef1f6;
+  border-radius: 15px;
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.1),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.9);
 }
 
 .seg,
@@ -327,39 +95,248 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
+  gap: 7px;
+  padding: 9px 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: #868b94;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.seg:hover {
+  color: #5a5f68;
+}
+
+.segActive {
+  background: linear-gradient(145deg, #ffffff, #eef1f6);
+  color: #2c2f36;
+  box-shadow: 0 3px 7px rgba(30, 41, 59, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.segIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Inputs — concave "wells" carved into the surface ── */
+.addRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  font-size: 15.5px;
+  font-family: "Inter", sans-serif;
+  color: #3a3f47;
+  background: #eef1f6;
+  border: none;
+  border-radius: 13px;
+  outline: none;
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.11),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
+  transition: box-shadow 0.2s ease;
+}
+
+.input::placeholder {
+  color: #a6abb4;
+}
+
+.input:focus {
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.11),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95),
+    0 0 0 3px rgba(76, 175, 80, 0.18);
+}
+
+/* ── Add — a raised knob that presses in ── */
+.addButton {
+  width: 46px;
+  flex-shrink: 0;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  color: #5a5f68;
+  background: linear-gradient(145deg, #ffffff, #eaedf2);
+  border: none;
+  border-radius: 13px;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(30, 41, 59, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.18s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  color: #2e7d32;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(30, 41, 59, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.addButton:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.14),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+}
+
+.addButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── Classify strip ── */
+.classifyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+/* Important / Urgent — soft pressable pills; subtle tint when on. */
+.flag,
+.flagOnImp,
+.flagOnUrg {
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  color: #70757d;
+  background: #eef1f6;
+  box-shadow: inset 1.5px 1.5px 3px rgba(30, 41, 59, 0.09),
+    inset -1.5px -1.5px 3px rgba(255, 255, 255, 0.9);
+}
+
+.flag:hover {
+  color: #5a5f68;
+}
+
+.flagOnImp {
+  color: #2e7d32;
+  background: rgba(76, 175, 80, 0.14);
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.flagOnUrg {
+  color: #b25e00;
+  background: rgba(255, 152, 0, 0.16);
+  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.estChip,
+.chipActive {
+  padding: 6px 10px;
+  font-size: 12px;
   font-weight: 500;
   font-family: "Inter", sans-serif;
   border: none;
   border-radius: 9px;
-  background: transparent;
-  color: #8a8a8a;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
+  color: #70757d;
+  background: #eef1f6;
+  box-shadow: inset 1.5px 1.5px 3px rgba(30, 41, 59, 0.09),
+    inset -1.5px -1.5px 3px rgba(255, 255, 255, 0.9);
 }
 
-.seg:hover {
-  color: #555;
+.estChip:hover {
+  color: #5a5f68;
 }
 
-.segActive {
-  background: #fff;
-  color: #222;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.06);
+.chipActive {
+  color: #2e7d32;
+  background: rgba(76, 175, 80, 0.14);
+  box-shadow: 0 2px 5px rgba(76, 175, 80, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.segIcon {
-  font-size: 14px;
-  line-height: 1;
+/* ── Deadline control — only shown for Important + Urgent ── */
+.deadlineWrap {
+  position: relative;
+  display: inline-flex;
 }
 
-/* ── Sticky / Habit composer (folded-in create surfaces) ── */
+.deadlineBtn,
+.deadlineOn {
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+  color: #70757d;
+  background: #eef1f6;
+  box-shadow: inset 1.5px 1.5px 3px rgba(30, 41, 59, 0.09),
+    inset -1.5px -1.5px 3px rgba(255, 255, 255, 0.9);
+}
+
+.deadlineOn {
+  font-weight: 600;
+  background: linear-gradient(145deg, #ffffff, #eef1f6);
+  box-shadow: 0 2px 6px rgba(30, 41, 59, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Quadrant cue — a small colour dot + neutral label (colour, but minimal). */
+.quadBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #5a5f68;
+  background: #eef1f6;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: inset 1px 1px 3px rgba(30, 41, 59, 0.08),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.9);
+}
+
+.quadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hintLine {
+  font-size: 12.5px;
+  color: #868b94;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ── Sticky / Habit composer ── */
 .composer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .composerHead {
@@ -370,16 +347,16 @@
 }
 
 .composerLabel {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #888;
+  letter-spacing: 0.05em;
+  color: #9097a0;
 }
 
 .composerHint {
   font-size: 12px;
-  color: #aaa;
+  color: #a6abb4;
 }
 
 .composerOk {
@@ -389,49 +366,115 @@
   animation: composerOkIn 0.25s ease;
 }
 
+/* Sticky textarea — a soft white "well" (no warm-yellow paper anymore). */
+.noteInput {
+  width: 100%;
+  resize: vertical;
+  min-height: 84px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-family: "Inter", sans-serif;
+  color: #3a3f47;
+  background: #eef1f6;
+  border: none;
+  border-radius: 14px;
+  outline: none;
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.11),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
+  transition: box-shadow 0.2s ease;
+}
+
+.noteInput::placeholder {
+  color: #a6abb4;
+}
+
+.noteInput:focus {
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.11),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95),
+    0 0 0 3px rgba(76, 175, 80, 0.18);
+}
+
+/* Primary "add" — a raised pill; subtle green accent on hover. */
+.noteAdd {
+  align-self: flex-start;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  color: #2c2f36;
+  background: linear-gradient(145deg, #ffffff, #eaedf2);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 3px 8px rgba(30, 41, 59, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.noteAdd:hover:not(:disabled) {
+  transform: translateY(-1px);
+  color: #2e7d32;
+  box-shadow: 0 5px 12px rgba(30, 41, 59, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.noteAdd:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 2px 2px 5px rgba(30, 41, 59, 0.14),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+}
+
+.noteAdd:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .habitNote {
   margin: 0;
   font-size: 12.5px;
-  color: #999;
+  color: #9aa0aa;
   padding-left: 2px;
 }
 
-/* ── Created-habits list (under the habit input) ── */
+/* ── Created-habits list (raised soft rows) ── */
 .habitList {
   list-style: none;
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   overflow-y: auto;
-  max-height: 38vh;
+  max-height: 36vh;
 }
 
 .habitRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 4px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.habitRow:last-child {
-  border-bottom: none;
+  gap: 10px;
+  padding: 11px 13px;
+  background: linear-gradient(145deg, #ffffff, #f1f3f7);
+  border-radius: 13px;
+  box-shadow: 0 3px 9px rgba(30, 41, 59, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .habitRowName {
   flex: 1;
   min-width: 0;
-  font-size: 15px;
-  color: #333;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #3a3f47;
   word-break: break-word;
 }
 
 .habitRowStreak {
   flex-shrink: 0;
-  font-size: 12.5px;
-  color: #e07b39;
+  font-size: 12px;
+  font-weight: 600;
+  color: #71a600;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .habitRowEdit,
@@ -440,47 +483,54 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: transparent;
   border: none;
-  color: #bbb;
+  color: #9097a0;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.18s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(145deg, #ffffff, #eef1f5);
+  box-shadow: 0 2px 5px rgba(30, 41, 59, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .habitRowEdit {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .habitRowDelete {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .habitRowEdit:hover {
-  background: rgba(76, 175, 80, 0.12);
   color: #2e7d32;
 }
 
 .habitRowDelete:hover {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  color: #cf6b62;
+}
+
+.habitRowEdit:active,
+.habitRowDelete:active {
+  box-shadow: inset 1px 1px 3px rgba(30, 41, 59, 0.16);
 }
 
 .habitEditInput {
   flex: 1;
   min-width: 0;
-  padding: 7px 12px;
-  font-size: 15px;
+  padding: 8px 13px;
+  font-size: 14.5px;
   font-family: "Inter", sans-serif;
-  color: #333;
-  background: #fff;
-  border: 1px solid #4caf50;
-  border-radius: 8px;
+  color: #3a3f47;
+  background: #eef1f6;
+  border: none;
+  border-radius: 10px;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.12);
+  box-shadow: inset 2px 2px 4px rgba(30, 41, 59, 0.11),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.95),
+    0 0 0 3px rgba(76, 175, 80, 0.18);
 }
 
 @keyframes composerOkIn {
@@ -494,66 +544,12 @@
   }
 }
 
-.noteInput {
-  width: 100%;
-  resize: vertical;
-  min-height: 56px;
-  padding: 10px 14px;
-  font-size: 15px;
-  font-family: "Inter", sans-serif;
-  color: #333;
-  background: #fffdf2;
-  border: 1px solid rgba(214, 184, 49, 0.4);
-  border-radius: 10px;
-  outline: none;
-  transition: all 0.2s;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.noteInput:focus {
-  border-color: #e0bf31;
-  background: #fffef9;
-  box-shadow: 0 0 0 3px rgba(224, 191, 49, 0.15);
-}
-
-.noteAdd {
-  align-self: flex-start;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: "Inter", sans-serif;
-  color: #6b5a17;
-  background: #fff3b0;
-  border: 1px solid rgba(214, 184, 49, 0.55);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.18s;
-  box-shadow: 0 2px 5px rgba(214, 184, 49, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.noteAdd:hover:not(:disabled) {
-  background: #ffec85;
-  transform: translateY(-1px);
-}
-
-.noteAdd:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.noteAdd:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
 @media (max-width: 640px) {
   .todoContainer {
-    width: 95%;
-    padding: 16px;
-    max-height: 85vh;
+    padding: 18px;
+    border-radius: 20px;
   }
-
   .title {
-    font-size: 22px;
+    font-size: 21px;
   }
 }

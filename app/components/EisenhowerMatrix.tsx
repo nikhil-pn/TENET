@@ -118,7 +118,21 @@ export default function EisenhowerMatrix({
             )}
             {pomodoros > 0 && (
               <span className={styles.estimate} title={`${t.estimatedMinutes} min`}>
-                <span className={styles.estimateIcon}>🍅</span>
+                <svg
+                  className={styles.estimateIcon}
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7.5V12l3 2" />
+                </svg>
                 {pomodoros}
               </span>
             )}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Habit } from "@/lib/types";
 import { dateToKey } from "@/lib/persist";
 import { subscribeWrites } from "@/lib/persist";
@@ -16,27 +16,13 @@ import styles from "./HabitTracker.module.css";
 
 const STRIP_DAYS = 7;
 
-// Accent palette — white card, one muted colour on the left edge, mirroring the
-// sticky notes. Picked deterministically from the habit id so it stays stable.
-const ACCENTS = [
-  "#e3b341", // amber
-  "#6fae5f", // green
-  "#6ea8d8", // blue
-  "#d98aa6", // rose
-  "#a99bd6", // lilac
-] as const;
-
-function hash(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 /**
  * Habit tracker pinned to the home screen (top-left, mirroring the sticky notes
- * on the right). Habits are created from the Tasks modal's Habit tab; here they
- * surface as clean little tracker cards you can check off for the day. Reads the
- * same habits the old Habits panel used and reloads through the persistence
+ * on the right). Neumorphic cards in the reference soft-UI style with real
+ * habit-tracking elements: a check that presses in, a streak line, and a 7-day
+ * strip of wells that fill as days are done. See docs/brand-and-design-language.md.
+ * Habits are created from the Tasks modal's Habit tab; here they surface as
+ * tracker cards you can check off for the day. Reloads through the persistence
  * write-seam so a habit added in the modal appears instantly.
  */
 const HabitTracker = () => {
@@ -79,13 +65,8 @@ const HabitTracker = () => {
       {sorted.map((habit) => {
         const done = isDoneOn(habit, todayKey);
         const streak = currentStreak(habit, today);
-        const accent = ACCENTS[hash(habit.id) % ACCENTS.length];
         return (
-          <div
-            key={habit.id}
-            className={done ? styles.cardDone : styles.card}
-            style={{ "--accent": accent } as React.CSSProperties}
-          >
+          <div key={habit.id} className={done ? styles.cardDone : styles.card}>
             <button
               className={styles.delete}
               onClick={() => handleDelete(habit.id)}
@@ -94,7 +75,7 @@ const HabitTracker = () => {
               ×
             </button>
 
-            <div className={styles.topRow}>
+            <div className={styles.head}>
               <button
                 className={done ? styles.checkDone : styles.check}
                 onClick={() => handleToggle(habit.id)}
@@ -107,33 +88,27 @@ const HabitTracker = () => {
               >
                 {done ? "✓" : ""}
               </button>
-              <span className={styles.name}>
-                {habit.emoji ? `${habit.emoji} ` : ""}
-                {habit.name}
-              </span>
+              <div className={styles.info}>
+                <span className={styles.name}>{habit.name}</span>
+                <span className={streak > 0 ? styles.sub : styles.subZero}>
+                  {streak > 0 ? `${streak} day streak` : "Start today"}
+                </span>
+              </div>
             </div>
 
-            <div className={styles.metaRow}>
-              <div className={styles.strip} aria-hidden="true">
-                {recentDays(habit, STRIP_DAYS, today).map((d) => (
-                  <span
-                    key={d.key}
-                    className={[
-                      styles.dot,
-                      d.done ? styles.dotDone : "",
-                      d.isToday ? styles.dotToday : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  />
-                ))}
-              </div>
-              <span
-                className={streak > 0 ? styles.streak : styles.streakZero}
-                title="Current streak"
-              >
-                🔥 {streak}
-              </span>
+            <div className={styles.strip} aria-hidden="true">
+              {recentDays(habit, STRIP_DAYS, today).map((d) => (
+                <span
+                  key={d.key}
+                  className={[
+                    styles.dot,
+                    d.done ? styles.dotDone : "",
+                    d.isToday ? styles.dotToday : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              ))}
             </div>
           </div>
         );
