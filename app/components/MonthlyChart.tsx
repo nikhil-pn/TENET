@@ -17,6 +17,11 @@ import {
   eventsForDate,
   eventsByDate,
 } from "@/lib/notes";
+import {
+  loadContributions,
+  getGitHubUsername,
+  type ContribMap,
+} from "@/lib/github/contributions";
 import styles from "./MonthlyChart.module.css";
 
 interface DayData {
@@ -79,6 +84,10 @@ const MonthlyChart = ({
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [totalProductivityMinutes, setTotalProductivityMinutes] = useState(0);
 
+  // GitHub contribution heatmap (opt-in; both null when not signed in w/ GitHub).
+  const [contrib, setContrib] = useState<ContribMap | null>(null);
+  const [ghUser, setGhUser] = useState<string | null>(null);
+
   // Events (stored as "event" notes). The calendar reads/writes these.
   const [notes, setNotes] = useState<Note[]>([]);
 
@@ -125,6 +134,21 @@ const MonthlyChart = ({
     });
     return unsub;
   }, [isVisible]);
+
+  // GitHub contribution heatmap — load the displayed year's public commit
+  // calendar when the panel opens. Stays null when not signed in with GitHub;
+  // cached on-device and never throws, so the calendar is unaffected if it fails.
+  useEffect(() => {
+    if (!isVisible) return;
+    setGhUser(getGitHubUsername());
+    let cancelled = false;
+    loadContributions(currentYear).then((map) => {
+      if (!cancelled) setContrib(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentYear, isVisible]);
 
   // Close the editor whenever the panel itself closes.
   useEffect(() => {
@@ -289,6 +313,10 @@ const MonthlyChart = ({
           {monthData.map((day, index) => {
             const events = eventMap[day.dateKey] ?? [];
             const isEditing = day.dateKey === editorKey;
+            const commits = day.isCurrentMonth
+              ? contrib?.[day.dateKey]
+              : undefined;
+            const commitCount = commits?.count ?? 0;
             return (
               <button
                 key={`day-${index}`}
@@ -304,9 +332,26 @@ const MonthlyChart = ({
                   .join(" ")}
                 aria-label={`${monthNames[currentMonth]} ${day.date}, ${
                   events.length
-                } event${events.length === 1 ? "" : "s"}`}
+                } event${events.length === 1 ? "" : "s"}${
+                  commitCount > 0
+                    ? `, ${commitCount} GitHub commit${
+                        commitCount === 1 ? "" : "s"
+                      }`
+                    : ""
+                }`}
               >
                 <span className={styles.dayNumber}>{day.date}</span>
+
+                {commits && commits.count > 0 && (
+                  <span
+                    className={styles.contribSquare}
+                    data-level={commits.level}
+                    title={`${commits.count} contribution${
+                      commits.count === 1 ? "" : "s"
+                    } on GitHub`}
+                    aria-hidden="true"
+                  />
+                )}
 
                 {events.length > 0 && (
                   <span className={styles.cellEvents}>
@@ -334,6 +379,27 @@ const MonthlyChart = ({
             );
           })}
         </div>
+
+        {ghUser && (
+          <div className={styles.ghFooter}>
+            <span className={styles.ghLegend} aria-hidden="true">
+              <span className={styles.ghLegendLabel}>commits</span>
+              <i className={styles.ghSwatch} data-level="1" />
+              <i className={styles.ghSwatch} data-level="2" />
+              <i className={styles.ghSwatch} data-level="3" />
+              <i className={styles.ghSwatch} data-level="4" />
+            </span>
+            <a
+              className={styles.ghNudge}
+              href="https://github.com/settings/profile"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Opens GitHub → Public profile. Turn on “Include private contributions on my profile” to count your private repos here too."
+            >
+              include private →
+            </a>
+          </div>
+        )}
 
         <div className={styles.totalTime}>Σ {totalProductivityMinutes} min</div>
       </div>

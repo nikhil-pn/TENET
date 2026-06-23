@@ -10,6 +10,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { getSupabase } from "../supabase";
 
 const PROVIDER_TOKEN_KEY = "tenet.cloud.githubToken.v1";
+const GITHUB_USERNAME_KEY = "tenet.cloud.githubUser.v1";
 
 function redirectTo(): string | undefined {
   if (typeof window === "undefined") return undefined;
@@ -48,6 +49,7 @@ export async function signOut(): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
   clearGitHubToken();
+  clearGitHubUsername();
   await sb.auth.signOut();
 }
 
@@ -70,6 +72,14 @@ export function onAuthChange(cb: (user: User | null) => void): () => void {
   }
   const { data } = sb.auth.onAuthStateChange((_event, session: Session | null) => {
     if (session?.provider_token) storeGitHubToken(session.provider_token);
+    // The GitHub login (e.g. "octocat") rides in user_metadata. supabase-js
+    // types that loosely, so read it defensively. The contribution heatmap
+    // (lib/github/contributions.ts) uses it to fetch the public commit calendar.
+    const meta = session?.user?.user_metadata as
+      | Record<string, unknown>
+      | undefined;
+    const login = meta?.user_name;
+    if (typeof login === "string" && login.length > 0) storeGitHubUsername(login);
     cb(session?.user ?? null);
   });
   return () => data.subscription.unsubscribe();
@@ -99,6 +109,37 @@ export function clearGitHubToken(): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(PROVIDER_TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+// ── GitHub username (device-local) ───────────────────────────────────────────
+// The login captured from the OAuth session, kept on this device so the
+// (tokenless) contribution heatmap can fetch the public commit calendar.
+
+export function storeGitHubUsername(login: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(GITHUB_USERNAME_KEY, login);
+  } catch {
+    /* storage blocked — the heatmap just won't show this session */
+  }
+}
+
+export function getGitHubUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(GITHUB_USERNAME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearGitHubUsername(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(GITHUB_USERNAME_KEY);
   } catch {
     /* ignore */
   }
