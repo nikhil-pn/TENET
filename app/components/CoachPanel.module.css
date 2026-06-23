@@ -117,3 +117,298 @@
   color: #555;
   margin: 0 0 12px;
 }
+
+/* ── Settings gear (header, right-aligned) ── */
+.gear {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9a9a9a;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gear:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+/* ── AI settings form ── */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.settingsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin: 0;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+.toggleRow input {
+  width: 16px;
+  height: 16px;
+  accent-color: #7cb342;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+}
+
+.input {
+  font-family: inherit;
+  font-size: 13px;
+  color: #333;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #7cb342;
+  background: #fff;
+}
+
+.disclosure {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8a8a8a;
+  margin: 0;
+}
+
+.settingsActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.primaryBtn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #7cb342;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: #6ca036;
+}
+
+.ghostBtn {
+  font-family: inherit;
+  font-size: 13px;
+  color: #999;
+  background: transparent;
+  border: none;
+  padding: 8px 4px;
+  cursor: pointer;
+}
+
+.ghostBtn:hover {
+  color: #d9534f;
+}
+
+/* ── AI review card ── */
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.reviewLoading {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.reviewTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reviewHeadline {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #3a3a3a;
+  margin: 0;
+}
+
+.badgeAi,
+.badgeSummary {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.badgeAi {
+  color: #4a7d1e;
+  background: #eaf4dd;
+}
+
+.badgeSummary {
+  color: #888;
+  background: #eee;
+}
+
+.wins {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.win {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #4a4a4a;
+}
+
+.winMark {
+  flex-shrink: 0;
+  color: #7cb342;
+  font-weight: 700;
+}
+
+.focusArea {
+  border-left: 3px solid #e3e6ea;
+  padding-left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.focusObservation {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #444;
+  margin: 0;
+}
+
+.focusWhy {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #777;
+  margin: 0;
+}
+
+.focusAction {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #558b2f;
+  margin: 2px 0 0;
+}
+
+.keystone {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f6f8f2;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.keystoneLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8aa86a;
+}
+
+.keystoneText {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #3f5a22;
+}
+
+.reviewFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 12px;
+}
+
+.privacyNote {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #a0a0a0;
+}
+
+.regenBtn {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #777;
+  background: #f0f1f3;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.regenBtn:hover:not(:disabled) {
+  background: #e6e7ea;
+  color: #555;
+}
+
+.regenBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
