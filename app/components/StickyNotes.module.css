@@ -3,14 +3,14 @@
   top: 64px;
   right: 18px;
   z-index: 40;
-  width: 208px;
+  width: 212px;
   max-height: calc(100vh - 150px);
   overflow-y: auto;
   overflow-x: visible;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 14px 8px 8px;
+  gap: 14px;
+  padding: 8px 6px 8px;
   /* Don't block clicks on the empty column; the notes opt back in. */
   pointer-events: none;
   scrollbar-width: none;
@@ -23,34 +23,34 @@
 .note {
   pointer-events: auto;
   position: relative;
-  padding: 18px 14px 14px;
-  border-radius: 2px 2px 3px 3px;
+  background: #ffffff;
+  padding: 16px 14px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   font-family: "Inter", sans-serif;
-  color: #3a3326;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.08);
-  transform: rotate(var(--tilt));
-  transform-origin: 50% 0;
+  color: #333;
+  /* Soft layered shadow to match the app's neumorphic cards. */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   animation: dropIn 0.42s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
 }
 
 .note:hover {
-  transform: rotate(0deg) translateY(-2px) scale(1.03);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18), 0 3px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.07);
   z-index: 1;
 }
 
-/* A strip of "tape" holding the note to the screen. */
-.tape {
+/* A thin coloured strip along the top edge — the only colour on the card. */
+.accent {
   position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-1.5deg);
-  width: 56px;
-  height: 18px;
-  border-radius: 1px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(0.5px);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 14px 14px 0 0;
+  background: var(--accent);
+  opacity: 0.85;
 }
 
 .text {
@@ -58,6 +58,7 @@
   font-size: 14px;
   line-height: 1.4;
   font-weight: 500;
+  color: #2f2f2f;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -66,20 +67,20 @@
   margin: 6px 0 0;
   font-size: 12.5px;
   line-height: 1.4;
-  color: #5b5240;
+  color: #888;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .delete {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 5px;
+  right: 5px;
   width: 22px;
   height: 22px;
   border: none;
   background: transparent;
-  color: rgba(58, 51, 38, 0.35);
+  color: rgba(0, 0, 0, 0.22);
   font-size: 17px;
   line-height: 1;
   cursor: pointer;
@@ -93,21 +94,21 @@
 }
 
 .delete:hover {
-  color: #c0392b;
-  background: rgba(0, 0, 0, 0.06);
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
 }
 
 @keyframes dropIn {
   0% {
     opacity: 0;
-    transform: translateY(-22px) rotate(0deg) scale(0.9);
+    transform: translateY(-18px) scale(0.95);
   }
   60% {
     opacity: 1;
   }
   100% {
     opacity: 1;
-    transform: rotate(var(--tilt)) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -121,10 +122,14 @@
   .stack {
     top: 58px;
     right: 8px;
-    width: 150px;
-    gap: 14px;
+    width: 154px;
+    gap: 12px;
   }
   .text {
     font-size: 13px;
+  }
+  /* Touch: no hover, so keep the delete affordance visible. */
+  .delete {
+    opacity: 0.5;
   }
 }

@@ -16,6 +16,22 @@ import styles from "./HabitTracker.module.css";
 
 const STRIP_DAYS = 7;
 
+// Accent palette — white card, one muted colour on the left edge, mirroring the
+// sticky notes. Picked deterministically from the habit id so it stays stable.
+const ACCENTS = [
+  "#e3b341", // amber
+  "#6fae5f", // green
+  "#6ea8d8", // blue
+  "#d98aa6", // rose
+  "#a99bd6", // lilac
+] as const;
+
+function hash(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 /**
  * Habit tracker pinned to the home screen (top-left, mirroring the sticky notes
  * on the right). Habits are created from the Tasks modal's Habit tab; here they
@@ -63,10 +79,12 @@ const HabitTracker = () => {
       {sorted.map((habit) => {
         const done = isDoneOn(habit, todayKey);
         const streak = currentStreak(habit, today);
+        const accent = ACCENTS[hash(habit.id) % ACCENTS.length];
         return (
           <div
             key={habit.id}
             className={done ? styles.cardDone : styles.card}
+            style={{ "--accent": accent } as React.CSSProperties}
           >
             <button
               className={styles.delete}

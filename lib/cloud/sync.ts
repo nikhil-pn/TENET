@@ -202,7 +202,10 @@ const SPECS: Record<string, TableSpec> = {
       const kind = str(row.kind);
       const n: Note = {
         id: String(row.id),
-        kind: kind === "daily" || kind === "monthly" ? kind : "custom",
+        kind:
+          kind === "daily" || kind === "monthly" || kind === "event"
+            ? kind
+            : "custom",
         title: String(row.title ?? ""),
         body: String(row.body ?? ""),
         createdAt: num(row.created_at) ?? 0,
@@ -262,8 +265,14 @@ async function pushKey(key: string): Promise<void> {
   const snap = readSnap(key);
   const now = Date.now();
 
+  // Start from the last-known snapshot and advance it PER successful operation
+  // below. Upsert and delete are issued (and caught) independently so one bad
+  // record — e.g. a row the server's CHECK constraint rejects — can no longer
+  // strand an unrelated delete in the same batch. Each kind of change retries
+  // on the next push until it lands.
+  const nextSnap: Record<string, string> = { ...snap };
+
   const changed: Syncable[] = [];
-  const nextSnap: Record<string, string> = {};
   let stampedLocally = false;
 
   for (const rec of current) {
@@ -274,36 +283,48 @@ async function pushKey(key: string): Promise<void> {
       rec.updatedAt = now;
       stampedLocally = true;
       changed.push(rec);
+    } else {
+      // Unchanged: the snapshot already reflects it.
+      nextSnap[id] = hash;
     }
-    nextSnap[id] = hash;
   }
 
   const currentIds = new Set(current.map((r) => idOf(spec, r)));
   const deletedIds = Object.keys(snap).filter((id) => !currentIds.has(id));
 
-  try {
-    if (changed.length > 0) {
+  if (changed.length > 0) {
+    try {
       const rows = changed.map((r) => spec.toRow(r, currentUserId as string));
       const { error } = await sb.from(spec.table).upsert(rows, {
         onConflict: spec.conflict,
       });
       if (error) throw error;
+      // Landed → advance the snapshot for exactly these records and persist the
+      // stamped updatedAt locally (silently).
+      for (const r of changed) nextSnap[idOf(spec, r)] = contentHash(r);
+      if (stampedLocally) writeLocal(key, current);
+    } catch {
+      // Leave these ids' old snapshot entries untouched so they retry next push.
     }
-    if (deletedIds.length > 0) {
-      const col = spec.idField === "date" ? "date" : "id";
+  }
+
+  if (deletedIds.length > 0) {
+    const col = spec.idField === "date" ? "date" : "id";
+    try {
       const { error } = await sb
         .from(spec.table)
         .delete()
         .eq("user_id", currentUserId)
         .in(col, deletedIds);
       if (error) throw error;
+      // Gone from the server → drop them from the snapshot.
+      for (const id of deletedIds) delete nextSnap[id];
+    } catch {
+      // Keep them in the snapshot so the delete retries on the next push.
     }
-    // Persist the stamped updatedAt locally (silently) and advance the snapshot.
-    if (stampedLocally) writeLocal(key, current);
-    writeLocal(snapKey(key), nextSnap);
-  } catch {
-    // Best-effort: leave the snapshot untouched so the next change retries.
   }
+
+  writeLocal(snapKey(key), nextSnap);
 }
 
 function schedulePush(key: string): void {
