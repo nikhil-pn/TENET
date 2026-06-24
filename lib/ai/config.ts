@@ -16,6 +16,15 @@ import { cloudEnabled } from "../supabase";
 
 const AI_CONFIG_KEY = "tenet.ai.config.v1";
 
+/**
+ * LOCAL-DEV ONLY override. When `NEXT_PUBLIC_OPENROUTER_KEY` is set (in
+ * `.env.local`), the Coach runs in `byok` mode against this key — the browser
+ * calls OpenRouter directly, so you can test the AI without deploying the Edge
+ * Function or signing in. It is NEXT_PUBLIC_, so it is baked into the bundle:
+ * NEVER set it for a public production build (the managed proxy is the prod path).
+ */
+const ENV_OPENROUTER_KEY = process.env.NEXT_PUBLIC_OPENROUTER_KEY;
+
 /** Default model when running in byok mode (proxy mode pins the model server-side). */
 export const DEFAULT_AI_MODEL = "deepseek/deepseek-chat";
 
@@ -56,9 +65,26 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
 /** The stored AI config, or null when AI has never been configured. */
 export function getAiConfig(): AiConfig | null {
   const stored = readJSON<Partial<AiConfig> | null>(AI_CONFIG_KEY, null);
-  if (!stored || typeof stored !== "object") return null;
-  // Merge over defaults so older/partial stored configs stay back-compatible.
-  return { ...DEFAULT_AI_CONFIG, ...stored };
+  const base =
+    stored && typeof stored === "object" ? { ...DEFAULT_AI_CONFIG, ...stored } : null;
+  // Local-dev override: a NEXT_PUBLIC_OPENROUTER_KEY auto-enables the Coach in byok
+  // mode against that key (browser → OpenRouter directly), bypassing the proxy +
+  // sign-in so you can test without deploying. The key lives only in the build env,
+  // never persisted to localStorage.
+  if (ENV_OPENROUTER_KEY) {
+    return {
+      ...(base ?? DEFAULT_AI_CONFIG),
+      enabled: true,
+      mode: "byok",
+      openRouterKey: ENV_OPENROUTER_KEY,
+    };
+  }
+  return base;
+}
+
+/** True when the local-dev OpenRouter override is active (also relaxes the data gate). */
+export function aiDevOverride(): boolean {
+  return Boolean(ENV_OPENROUTER_KEY);
 }
 
 export function saveAiConfig(config: AiConfig): void {

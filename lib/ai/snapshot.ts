@@ -24,6 +24,7 @@ import { loadTodos } from "../storage";
 import { currentStreak, isDoneOn, loadHabits } from "../habits";
 import { loadDayLogs } from "../daylog";
 import { focusStreak, loadSessions } from "../pomodoroLog";
+import { aiDevOverride } from "./config";
 
 /** The Coach looks back over this many days (the reporting window). */
 export const COACH_WINDOW_DAYS = 14;
