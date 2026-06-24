@@ -1,17 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { Todo } from "@/lib/types";
-import { loadTodos } from "@/lib/storage";
 import { cloudEnabled, getSupabase } from "@/lib/supabase";
 import {
   COACH_WINDOW_DAYS,
   MIN_ACTIVE_DAYS,
+  type CoachDigest,
   type DataSufficiency,
+  buildCoachDigest,
   dataSufficiency,
 } from "@/lib/ai/snapshot";
 import { type AiConfig, DEFAULT_AI_CONFIG, getAiConfig, saveAiConfig } from "@/lib/ai/config";
 import { type CoachResult, getCachedReview, getCoachReview } from "@/lib/ai/coach";
-import Insights from "./Insights";
+import CoachCharts from "./CoachCharts";
 import Reflect from "./Reflect";
 import styles from "./CoachPanel.module.css";
 
@@ -22,15 +22,15 @@ interface CoachPanelProps {
 
 /**
  * The Coach — a weekly review surface opened from the dock. It always shows the
- * deterministic floor (the time-mix Insights + the satisfaction Reflection); when
- * the user opts AI in, an AI-narrated summary card sits on top. AI is keyless:
- * it routes through a managed Supabase Edge Function (the owner's key) and only
- * needs the user to be signed in. With AI off / signed out, the same card shows a
- * deterministic templated summary, so the panel is useful either way. Read-only
- * over a snapshot of todos (Reflect owns its day-log persistence), so no save.
+ * "Soft Focus" charts (CoachCharts, from the same digest the AI narrates) plus the
+ * daily satisfaction logger (Reflect); when the user opts AI in, an AI-narrated
+ * summary card sits on top. AI is keyless: it routes through a managed Supabase
+ * Edge Function (the owner's key) and only needs the user to be signed in. With AI
+ * off / signed out, the card shows a deterministic templated summary, so the panel
+ * is useful either way.
  */
 const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [digest, setDigest] = useState<CoachDigest | null>(null);
   const [sufficiency, setSufficiency] = useState<DataSufficiency | null>(null);
   const [review, setReview] = useState<CoachResult | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -43,7 +43,7 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
     if (!isVisible) return;
     let cancelled = false;
 
-    setTodos(loadTodos());
+    setDigest(buildCoachDigest());
     setCfg(getAiConfig() ?? DEFAULT_AI_CONFIG);
     const suff = dataSufficiency();
     setSufficiency(suff);
@@ -260,16 +260,12 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
             </section>
           )}
 
-          <div className={styles.grid}>
-            <section className={styles.card}>
-              <h3 className={styles.cardTitle}>Time mix</h3>
-              <Insights todos={todos} />
-            </section>
-            <section className={styles.card}>
-              <h3 className={styles.cardTitle}>Reflection</h3>
-              <Reflect />
-            </section>
-          </div>
+          {digest && <CoachCharts digest={digest} />}
+
+          <section className={styles.logger}>
+            <h3 className={styles.loggerTitle}>How did today go?</h3>
+            <Reflect />
+          </section>
         </div>
       </div>
     </div>
