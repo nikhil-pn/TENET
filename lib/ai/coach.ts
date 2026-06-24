@@ -13,8 +13,8 @@ import {
   QUADRANT_META,
   REFERENCE_IMPORTANT_SHARE,
 } from "../prioritization";
-import { coachEnabled } from "./config";
-import { chat } from "./provider";
+import { aiMode, coachEnabled } from "./config";
+import { chat, invokeFunction } from "./provider";
 import { COACH_SCHEMA, COACH_SYSTEM_PROMPT, buildCoachUserMessage } from "./prompts";
 import { type CoachDigest, buildCoachDigest, dataSufficiency } from "./snapshot";
 
@@ -195,13 +195,18 @@ export async function getCoachReview(opts?: { force?: boolean; today?: Date }): 
   let source: ReviewSource = "fallback";
 
   if (canAi && dataSufficiency(today).ready) {
-    const raw = await chat<CoachReview>(
-      [
-        { role: "system", content: COACH_SYSTEM_PROMPT },
-        { role: "user", content: buildCoachUserMessage(digest) },
-      ],
-      { schema: COACH_SCHEMA, temperature: 0.5 }
-    );
+    // Proxy: send only the digest; the Edge Function holds the key + prompt.
+    // Byok: build the prompt here and call OpenRouter directly with the user key.
+    const raw =
+      aiMode() === "proxy"
+        ? await invokeFunction<CoachReview>("coach", { digest })
+        : await chat<CoachReview>(
+            [
+              { role: "system", content: COACH_SYSTEM_PROMPT },
+              { role: "user", content: buildCoachUserMessage(digest) },
+            ],
+            { schema: COACH_SCHEMA, temperature: 0.5 }
+          );
     if (raw && isCoachReview(raw)) {
       review = raw;
       source = "ai";

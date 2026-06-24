@@ -2,19 +2,14 @@
 import { useEffect, useState } from "react";
 import type { Todo } from "@/lib/types";
 import { loadTodos } from "@/lib/storage";
+import { cloudEnabled, getSupabase } from "@/lib/supabase";
 import {
   COACH_WINDOW_DAYS,
   MIN_ACTIVE_DAYS,
   type DataSufficiency,
   dataSufficiency,
 } from "@/lib/ai/snapshot";
-import {
-  type AiConfig,
-  DEFAULT_AI_CONFIG,
-  DEFAULT_AI_MODEL,
-  getAiConfig,
-  saveAiConfig,
-} from "@/lib/ai/config";
+import { type AiConfig, DEFAULT_AI_CONFIG, getAiConfig, saveAiConfig } from "@/lib/ai/config";
 import { type CoachResult, getCachedReview, getCoachReview } from "@/lib/ai/coach";
 import Insights from "./Insights";
 import Reflect from "./Reflect";
@@ -28,10 +23,11 @@ interface CoachPanelProps {
 /**
  * The Coach — a weekly review surface opened from the dock. It always shows the
  * deterministic floor (the time-mix Insights + the satisfaction Reflection); when
- * the user opts AI in (BYOK) and enough data exists, an AI-narrated summary card
- * sits on top. With AI off, the same card shows a deterministic templated
- * summary, so the panel is useful either way. Read-only over a snapshot of todos
- * (Reflect owns its own day-log persistence), so there is no save effect.
+ * the user opts AI in, an AI-narrated summary card sits on top. AI is keyless:
+ * it routes through a managed Supabase Edge Function (the owner's key) and only
+ * needs the user to be signed in. With AI off / signed out, the same card shows a
+ * deterministic templated summary, so the panel is useful either way. Read-only
+ * over a snapshot of todos (Reflect owns its day-log persistence), so no save.
  */
 const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -40,6 +36,7 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [cfg, setCfg] = useState<AiConfig>(DEFAULT_AI_CONFIG);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   // Reload from storage on open (picks up edits made elsewhere).
   useEffect(() => {
@@ -51,8 +48,16 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
     const suff = dataSufficiency();
     setSufficiency(suff);
 
-    // Instant paint from cache, then refresh (returns cached if still fresh —
-    // only calls the model on a new ISO week, a forced refresh, or a fallback→AI
+    // Are we signed in? (Only signed-in users can use the managed AI service.)
+    const sb = getSupabase();
+    if (sb) {
+      sb.auth.getUser().then(({ data }) => !cancelled && setSignedIn(Boolean(data.user)));
+    } else {
+      setSignedIn(false);
+    }
+
+    // Instant paint from cache, then refresh (returns cached if still fresh — only
+    // calls the model on a new ISO week, a forced refresh, or a fallback→AI
     // upgrade). Skipped entirely until there's enough data.
     setReview(getCachedReview());
     if (suff.ready) {
@@ -80,9 +85,12 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
   if (!isVisible) return null;
 
   const ready = sufficiency?.ready ?? false;
-  const aiOn = cfg.enabled && cfg.coachEnabled && Boolean(cfg.openRouterKey);
+  const serviceAvailable = cfg.mode === "proxy" ? cloudEnabled : Boolean(cfg.openRouterKey);
+  const wantsAi = cfg.enabled && cfg.coachEnabled;
+  const aiOn = wantsAi && serviceAvailable && (cfg.mode === "proxy" ? signedIn === true : true);
+  const needsSignIn = wantsAi && cfg.mode === "proxy" && cloudEnabled && signedIn === false;
 
-  const regenerate = () => {
+  const refresh = () => {
     setReviewLoading(true);
     getCoachReview({ force: true })
       .then(setReview)
@@ -90,21 +98,18 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
   };
 
   const saveSettings = () => {
-    const next: AiConfig = { ...cfg, model: cfg.model.trim() || DEFAULT_AI_MODEL };
-    saveAiConfig(next);
-    setCfg(next);
+    saveAiConfig(cfg);
     setShowSettings(false);
-    // Re-evaluate the review now that config may have changed.
     if (ready) {
       setReviewLoading(true);
-      getCoachReview()
+      getCoachReview({ force: true })
         .then(setReview)
         .finally(() => setReviewLoading(false));
     }
   };
 
-  const turnOffAndForget = () => {
-    const next: AiConfig = { ...DEFAULT_AI_CONFIG };
+  const turnOff = () => {
+    const next: AiConfig = { ...cfg, enabled: false };
     saveAiConfig(next);
     setCfg(next);
   };
@@ -140,59 +145,47 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
         <div className={styles.scroll}>
           {showSettings && (
             <div className={styles.settings}>
-              <p className={styles.settingsTitle}>AI Coach (optional)</p>
+              <p className={styles.settingsTitle}>AI weekly review</p>
               <label className={styles.toggleRow}>
                 <input
                   type="checkbox"
                   checked={cfg.enabled}
                   onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })}
                 />
-                <span>Enable in-app AI</span>
-              </label>
-              <label className={styles.toggleRow}>
-                <input
-                  type="checkbox"
-                  checked={cfg.coachEnabled}
-                  onChange={(e) => setCfg({ ...cfg, coachEnabled: e.target.checked })}
-                  disabled={!cfg.enabled}
-                />
-                <span>Use AI for the weekly review</span>
-              </label>
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>OpenRouter API key</span>
-                <input
-                  type="password"
-                  className={styles.input}
-                  placeholder="sk-or-..."
-                  value={cfg.openRouterKey ?? ""}
-                  onChange={(e) => setCfg({ ...cfg, openRouterKey: e.target.value })}
-                  autoComplete="off"
-                />
-              </label>
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>Model</span>
-                <input
-                  type="text"
-                  className={styles.input}
-                  placeholder={DEFAULT_AI_MODEL}
-                  value={cfg.model}
-                  onChange={(e) => setCfg({ ...cfg, model: e.target.value })}
-                />
+                <span>Enable the AI-written review (free)</span>
               </label>
               <p className={styles.disclosure}>
                 Off by default. When on, the Coach sends a small set of anonymized
                 numbers (your time-mix, completion rate, streaks) and up to 5 short
-                task titles to OpenRouter with zero-data-retention routing — never
-                your notes. Your key is stored only on this device.
+                task titles to TENET&rsquo;s AI service with zero-data-retention
+                routing — never your notes. Requires sign-in; nothing is stored on
+                your device but this setting.
               </p>
+              {!serviceAvailable && (
+                <p className={styles.warnNote}>
+                  The AI service isn&rsquo;t configured in this build — the review
+                  falls back to an on-device summary.
+                </p>
+              )}
               <div className={styles.settingsActions}>
                 <button type="button" className={styles.primaryBtn} onClick={saveSettings}>
                   Save
                 </button>
-                <button type="button" className={styles.ghostBtn} onClick={turnOffAndForget}>
-                  Turn off &amp; forget key
-                </button>
+                {cfg.enabled && (
+                  <button type="button" className={styles.ghostBtn} onClick={turnOff}>
+                    Turn off
+                  </button>
+                )}
               </div>
+            </div>
+          )}
+
+          {needsSignIn && !showSettings && (
+            <div className={styles.warn}>
+              <p className={styles.warnText}>
+                Sign in to get your free AI review. Until then, here&rsquo;s an
+                on-device summary.
+              </p>
             </div>
           )}
 
@@ -256,7 +249,7 @@ const CoachPanel = ({ isVisible, onClose }: CoachPanelProps) => {
                     <button
                       type="button"
                       className={styles.regenBtn}
-                      onClick={regenerate}
+                      onClick={refresh}
                       disabled={reviewLoading}
                     >
                       {reviewLoading ? "…" : "Refresh"}

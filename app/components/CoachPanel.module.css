@@ -209,6 +209,28 @@
   margin: 0;
 }
 
+.warnNote {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #b06a2c;
+  margin: 0;
+}
+
+/* Sign-in prompt above the review when AI is on but the user is signed out. */
+.warn {
+  background: #fdf4e7;
+  border: 1px solid #f0dcc0;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.warnText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #99632a;
+}
+
 .settingsActions {
   display: flex;
   gap: 10px;

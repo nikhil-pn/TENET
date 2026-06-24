@@ -7,7 +7,12 @@
 >
 > Pairs with `CLAUDE.md` (how to work on the repo), `docs/warikoo-time-management-spec.md` (the
 > prioritization feature the coach reasons over), and `docs/roadmap-and-research.md` (the backlog).
-> Status: **research + recommendation only — not yet approved or built.**
+> Status: **Phase 1 (the weekly Coach) BUILT.** Phase 2 (AI classification) **dropped** —
+> classification stays a manual 2-toggle choice by design. **Delivery pivoted from BYOK to a
+> managed Supabase Edge Function** (`supabase/functions/coach/`): the owner holds one OpenRouter key
+> as a Supabase secret, so AI is free for signed-in users (no per-user key, off by default). This is
+> §3.1 "Phase 2 proxy" brought forward as the default; the BYOK notes below remain accurate for the
+> `byok` mode that still exists in code.
 
 ---
 

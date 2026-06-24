@@ -14,6 +14,7 @@
 // calling `api.deepseek.com` (China storage, trains on inputs, no browser CORS).
 
 import { getAiConfig } from "./config";
+import { getSupabase } from "../supabase";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -87,6 +88,28 @@ export async function chat<T>(
     return JSON.parse(content) as T;
   } catch {
     // Network error, abort, or invalid JSON — degrade to the deterministic path.
+    return null;
+  }
+}
+
+/**
+ * Proxy transport: invoke a Supabase Edge Function that holds the owner's key
+ * server-side. supabase-js auto-attaches the signed-in user's token; the
+ * function rejects non-authenticated callers. Returns the function's JSON body as
+ * `T`, or `null` on any failure (not signed in, function error, network) so
+ * callers fall back to deterministic logic.
+ */
+export async function invokeFunction<T>(
+  name: string,
+  body: Record<string, unknown>
+): Promise<T | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.functions.invoke(name, { body });
+    if (error || data == null) return null;
+    return data as T;
+  } catch {
     return null;
   }
 }

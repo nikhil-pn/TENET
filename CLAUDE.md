@@ -79,16 +79,21 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
   - `lib/githubStreak.ts` — the daily accountability commit to the `tenet-log` repo (Contents
     API, CORS, deduped to one commit/active day).
   - `supabase/migrations/0001_init.sql` — schema + RLS (the source of truth for the cloud shape).
-- **AI layer (opt-in, BYOK-gated, all no-op when unconfigured):**
-  - `lib/ai/config.ts` — the gate (the `lib/supabase.ts` analogue): typed `AiConfig` read from the
-    persist seam (`tenet.ai.config.v1`), `getAiConfig()`/null, `aiEnabled()`/`coachEnabled()`. The
-    key is user-supplied BYOK in localStorage — **never** a `NEXT_PUBLIC_*` var.
-  - `lib/ai/provider.ts` — the single LLM client seam (the `lib/persist.ts` analogue for model
-    calls): `chat(messages, {schema})` → parsed JSON or **null on any failure** (callers fall back
-    to deterministic). Client-side `fetch` to OpenRouter, `zdr:true`. Swapping provider/host/proxy
-    happens HERE only — never scatter model calls into domain/UI code.
-  - *(coming next, per the Phase-1 plan): `lib/ai/snapshot.ts` (deterministic digest builder),
-    `lib/ai/coach.ts` + `lib/ai/prompts.ts` (the weekly Coach), and `app/components/CoachPanel.tsx`.*
+- **AI layer (opt-in, off by default, all no-op when unconfigured):**
+  - `lib/ai/config.ts` — the gate (the `lib/supabase.ts` analogue): typed `AiConfig` from the persist
+    seam (`tenet.ai.config.v1`), `getAiConfig()`/null, `aiEnabled()`/`coachEnabled()`/`aiMode()`.
+    **Default transport is `proxy`** (managed Edge Function, keyless for users); `byok` (user's own
+    key) is kept in code but not surfaced. Any key lives in localStorage — **never** a `NEXT_PUBLIC_*` var.
+  - `lib/ai/provider.ts` — the single model-call seam (the `lib/persist.ts` analogue): `chat()`
+    (byok → OpenRouter direct) and `invokeFunction()` (proxy → `supabase.functions.invoke`). Both
+    return **null on any failure** (callers fall back to deterministic). Provider/host/proxy choice
+    lives HERE only — never scatter model calls into domain/UI code.
+  - `lib/ai/snapshot.ts` — deterministic digest builder (NO LLM): the compute-first half.
+  - `lib/ai/coach.ts` + `lib/ai/prompts.ts` — the weekly Coach: narrate the digest via proxy/byok,
+    cache per ISO week, deterministic templated fallback. `app/components/CoachPanel.tsx` is the UI.
+  - `supabase/functions/coach/` — the **managed-key Edge Function** (Deno): holds the owner's single
+    OpenRouter key as a Supabase secret, requires a signed-in user, pins model+prompt server-side.
+    Excluded from the app's `tsc`/eslint (Deno runtime). Deploy steps: its `README.md`.
 
 > **Live instance (provisioned 2026-06-20):** Supabase project ref `jfxbltohhirevwunyipd`
 > (`https://jfxbltohhirevwunyipd.supabase.co`); GitHub OAuth enabled; schema loaded; verified
@@ -133,10 +138,13 @@ a Pomodoro + to-do + day-planner/calendar + habit-streaks + **Eisenhower (Wariko
       `NEXT_PUBLIC_SUPABASE_*` (in `.env.local`); unset ⇒ app stays local-only. See `README.md`.
       Remaining: Vercel deploy + production redirect URLs.
 
-- [x] **Opt-in AI layer — Phase 1 (the weekly "Coach") LIVE.** `lib/ai/{config,provider,snapshot,
-      coach,prompts}.ts` + a `CoachPanel` dock item (resurrecting `Insights.tsx`/`Reflect.tsx`).
-      Off by default; BYOK→OpenRouter+`zdr`; the model only narrates the locally-computed digest,
-      with a deterministic templated fallback when AI is off/unreachable. **Phase 2 (AI Eisenhower
+- [x] **Opt-in AI layer — Phase 1 (the weekly "Coach") LIVE, keyless/managed.** `lib/ai/{config,
+      provider,snapshot,coach,prompts}.ts` + a `CoachPanel` dock item (resurrecting `Insights.tsx`/
+      `Reflect.tsx`). Off by default; the model only narrates the locally-computed digest, with a
+      deterministic templated fallback. **Delivery: a managed Supabase Edge Function (`supabase/
+      functions/coach/`) holds the owner's ONE OpenRouter key (a Supabase secret) → AI is free for
+      signed-in users; no per-user key.** OpenRouter→DeepSeek, `zdr:true`. Owner deploy: set the
+      `OPENROUTER_API_KEY` secret + `supabase functions deploy coach` (see that dir's `README.md`). **Phase 2 (AI Eisenhower
       classification) is intentionally DROPPED — important/urgent stays a manual 2-toggle choice by
       design (AI can't know personal importance; auto-apply would corrupt the time-audit).** Optional
       future AI: P3 Supabase Edge proxy (hide the key), P4 on-device WebLLM. Full design + rationale:

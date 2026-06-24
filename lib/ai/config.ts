@@ -1,31 +1,39 @@
 // The opt-in gate for the in-app AI layer — the `lib/supabase.ts` analogue.
 //
-// In-app AI is OFF by default. Mirroring the cloud layer's local-first contract,
-// nothing here calls a model until the user explicitly enables AI and supplies
-// their OWN provider key (BYOK). When disabled or unconfigured, `getAiConfig()`
-// returns null and every `lib/ai/` caller no-ops, so the app behaves exactly
-// like the pure-local PWA — zero network. The key lives in localStorage via the
-// persist seam, NEVER as a `NEXT_PUBLIC_*` env var (those bake into the static
-// export bundle and would leak to every browser).
+// In-app AI is OFF by default. The DEFAULT transport is "proxy": a managed
+// Supabase Edge Function ("coach") that holds the app owner's single OpenRouter
+// key server-side, so end users get AI free without ever pasting a key — they
+// just need to be signed in. A "byok" mode (user pastes their own key) is kept
+// for flexibility but is not surfaced in the default UI.
+//
+// When AI is disabled or its transport is unavailable, getAiConfig()-gated
+// callers no-op, so the app behaves exactly like the pure-local PWA — zero AI
+// network. Config (and any byok key) lives in localStorage via the persist seam,
+// NEVER as a `NEXT_PUBLIC_*` env var.
 
 import { readJSON, writeJSON } from "../persist";
+import { cloudEnabled } from "../supabase";
 
 const AI_CONFIG_KEY = "tenet.ai.config.v1";
 
-/** Default OpenRouter model — DeepSeek-the-model, routed for privacy (see provider). */
+/** Default model when running in byok mode (proxy mode pins the model server-side). */
 export const DEFAULT_AI_MODEL = "deepseek/deepseek-chat";
 
-/** How model calls are delivered. Phase 1 ships BYOK; proxy/local are reserved. */
-export type AiMode = "byok";
+/**
+ * Transport for model calls.
+ * - "proxy": call the managed Supabase Edge Function (owner's key, signed-in users, free).
+ * - "byok": call OpenRouter directly with the user's own key (no UI by default).
+ */
+export type AiMode = "proxy" | "byok";
 
 export interface AiConfig {
   /** Master switch. false ⇒ the whole AI layer is inert (no network). */
   enabled: boolean;
-  /** Delivery transport. Phase 1 supports BYOK only. */
+  /** Delivery transport. Defaults to the managed proxy. */
   mode: AiMode;
-  /** The user's own OpenRouter API key (BYOK). Stored locally; never bundled. */
+  /** The user's own OpenRouter API key — byok mode only. */
   openRouterKey?: string;
-  /** Model id passed to OpenRouter. Defaults to {@link DEFAULT_AI_MODEL}. */
+  /** Model id — byok mode only (proxy pins it server-side). */
   model: string;
   /** Per-feature toggle for the weekly Coach. */
   coachEnabled: boolean;
@@ -36,10 +44,10 @@ export interface AiConfig {
   includeNotes: boolean;
 }
 
-/** The shape a fresh, untouched config takes — everything off but the defaults. */
+/** A fresh, untouched config — everything off but the defaults. */
 export const DEFAULT_AI_CONFIG: AiConfig = {
   enabled: false,
-  mode: "byok",
+  mode: "proxy",
   model: DEFAULT_AI_MODEL,
   coachEnabled: true,
   includeNotes: false,
@@ -57,19 +65,31 @@ export function saveAiConfig(config: AiConfig): void {
   writeJSON(AI_CONFIG_KEY, config);
 }
 
+/** Whether the config's transport can reach a model at all (ignores the master switch). */
+function transportReady(c: AiConfig): boolean {
+  // proxy ⇒ Supabase must be configured (the Edge Function lives there). The
+  // signed-in requirement is enforced by the function itself at call time.
+  // byok ⇒ a user key must be present.
+  return c.mode === "proxy" ? cloudEnabled : Boolean(c.openRouterKey);
+}
+
 /**
- * True when the AI layer is fully usable: enabled by the user AND a BYOK key is
- * present. The single gate every `lib/ai/` entry point checks — the
- * `cloudEnabled` analogue. When false, callers MUST fall back to deterministic
- * logic and make ZERO network calls.
+ * True when the AI layer is enabled by the user AND its transport is available.
+ * The single gate every `lib/ai/` entry point checks. When false, callers MUST
+ * fall back to deterministic logic and make ZERO model calls.
  */
 export function aiEnabled(): boolean {
   const c = getAiConfig();
-  return Boolean(c?.enabled && c.mode === "byok" && c.openRouterKey);
+  return Boolean(c?.enabled) && c !== null && transportReady(c);
 }
 
 /** True when the Coach feature specifically is enabled and usable. */
 export function coachEnabled(): boolean {
   const c = getAiConfig();
   return aiEnabled() && Boolean(c?.coachEnabled);
+}
+
+/** The active transport mode (for callers that branch on proxy vs byok). */
+export function aiMode(): AiMode {
+  return getAiConfig()?.mode ?? DEFAULT_AI_CONFIG.mode;
 }
